@@ -2,13 +2,13 @@ import type { z } from 'zod';
 
 export type ConfigPrimitive = string | number | boolean;
 
-export type ConfigValue = ConfigPrimitive | ConfigObject | ConfigArray;
-
 export type ConfigObject = {
   [key: string]: ConfigValue;
 };
 
-export type ConfigArray = ConfigValue[];
+export type ConfigArray = Array<ConfigPrimitive | ConfigObject>;
+
+export type ConfigValue = ConfigPrimitive | ConfigObject | ConfigArray;
 
 export interface ConfigEnvyOptions<T extends z.ZodType = z.ZodType> {
   /**
