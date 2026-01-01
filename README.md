@@ -4,22 +4,16 @@ A modern TypeScript project template with best practices, tooling configuration,
 
 ## Features
 
-- ✅ TypeScript with strict type checking
-- ✅ Modern ES2022+ syntax
-- ✅ pnpm package management
-- ✅ Vitest for testing
-- ✅ oxlint for linting
-- ✅ oxfmt for formatting
-- ✅ Decorator support
-- ✅ Environment variable management with dotenvx
-- ✅ Structured logging with pino
-- ✅ Runtime validation with Zod
-- ✅ Changesets for version management
-- ✅ Pre-commit hooks with Husky
-- ✅ GitHub Actions CI/CD
-- ✅ Dependabot for dependency updates
-- ✅ AI agent instructions (AGENTS.md)
-- ✅ MCP server configuration for Context7
+- **Schema-Guided Nesting**: When a Zod schema is provided, the structure follows the schema exactly
+  - `PORT_NUMBER` → `{ portNumber }` or `{ port: { number } }` depending on your schema
+- **Smart Nesting** (without schema): Automatically nests when multiple entries share a prefix
+  - `PORT_NUMBER=1234` → `{ portNumber: 1234 }` (single entry stays flat)
+  - `LOG_LEVEL` + `LOG_PATH` → `{ log: { level: ..., path: ... } }` (multiple entries get nested)
+- **Type Coercion**: Automatically converts strings to numbers and booleans
+- **Prefix Filtering**: Only load variables with a specific prefix (e.g., `APP_`)
+- **Zod Validation**: Optional schema validation with full TypeScript type inference
+- **Type Utilities**: `ToEnv<T>`, `FromEnv<T>`, `WithPrefix<T>` for type-level transformations
+- **Zero Dependencies Runtime**: Uses Zod only when you opt-in to schema validation
 
 ## Quick Start
 
@@ -237,7 +231,78 @@ Husky and lint-staged are configured to run on every commit:
 - Lint and fix with oxlint
 - Ensure code quality before commits
 
-## Contributing
+## Type Utilities
+
+configenvy exports type utilities to help with type-safe environment variable handling:
+
+### `ToEnv<T>`
+
+Convert a nested config type to a flat SCREAMING_SNAKE_CASE env record:
+
+```typescript
+import type { ToEnv } from 'configenvy';
+
+type Config = {
+  portNumber: number;
+  log: {
+    level: string;
+    path: string;
+  };
+};
+
+type Env = ToEnv<Config>;
+// {
+//   PORT_NUMBER: string;
+//   LOG_LEVEL: string;
+//   LOG_PATH: string;
+// }
+```
+
+### `FromEnv<T>`
+
+Convert flat env keys to camelCase (uses type-fest's `CamelCasedPropertiesDeep`):
+
+```typescript
+import type { FromEnv } from 'configenvy';
+
+type Env = { PORT_NUMBER: string; LOG_LEVEL: string };
+type Config = FromEnv<Env>;
+// { portNumber: string; logLevel: string }
+```
+
+### `WithPrefix<T, P>` / `WithoutPrefix<T, P>`
+
+Add or remove prefixes from env keys:
+
+```typescript
+import type { WithPrefix, WithoutPrefix } from 'configenvy';
+
+type Env = { PORT: string; DEBUG: string };
+type PrefixedEnv = WithPrefix<Env, 'APP'>;
+// { APP_PORT: string; APP_DEBUG: string }
+
+type Unprefixed = WithoutPrefix<PrefixedEnv, 'APP'>;
+// { PORT: string; DEBUG: string }
+```
+
+### `SchemaToEnv<T>`
+
+Extract env type from a Zod schema's inferred type:
+
+```typescript
+import type { SchemaToEnv } from 'configenvy';
+import { z } from 'zod';
+
+const schema = z.object({
+  port: z.number(),
+  log: z.object({ level: z.string() })
+});
+
+type Env = SchemaToEnv<z.infer<typeof schema>>;
+// { PORT: string; LOG_LEVEL: string }
+```
+
+## Type Coercion Rules
 
 1. Follow the coding standards in [AGENTS.md](AGENTS.md)
 2. Write tests for new features
