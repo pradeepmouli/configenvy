@@ -307,6 +307,109 @@ describe('configEnvy', () => {
       expect(port).toBe(3000);
       expect(level).toBe('info');
     });
+
+    it('schema guides nesting even for single entries', () => {
+      // Without schema, a single LOG_LEVEL would become logLevel (flat)
+      // With schema specifying log.level, it becomes nested
+      const schema = z.object({
+        log: z.object({
+          level: z.string()
+        })
+      });
+
+      const env = {
+        LOG_LEVEL: 'debug'
+      };
+
+      const config = configEnvy({ env, schema });
+      expect(config).toEqual({
+        log: {
+          level: 'debug'
+        }
+      });
+    });
+
+    it('schema allows mixing flat and nested based on schema shape', () => {
+      const schema = z.object({
+        portNumber: z.number(), // PORT_NUMBER -> portNumber (flat)
+        log: z.object({
+          // LOG_LEVEL -> log.level (nested)
+          level: z.string()
+        })
+      });
+
+      const env = {
+        PORT_NUMBER: '3000',
+        LOG_LEVEL: 'info'
+      };
+
+      const config = configEnvy({ env, schema });
+      expect(config).toEqual({
+        portNumber: 3000,
+        log: {
+          level: 'info'
+        }
+      });
+    });
+
+    it('schema handles deeply nested structures', () => {
+      const schema = z.object({
+        database: z.object({
+          connection: z.object({
+            host: z.string(),
+            port: z.number()
+          })
+        })
+      });
+
+      const env = {
+        DATABASE_CONNECTION_HOST: 'localhost',
+        DATABASE_CONNECTION_PORT: '5432'
+      };
+
+      const config = configEnvy({ env, schema });
+      expect(config).toEqual({
+        database: {
+          connection: {
+            host: 'localhost',
+            port: 5432
+          }
+        }
+      });
+    });
+
+    it('schema with optional fields works correctly', () => {
+      const schema = z.object({
+        port: z.number(),
+        debug: z.boolean().optional()
+      });
+
+      const env = {
+        PORT: '3000'
+      };
+
+      const config = configEnvy({ env, schema });
+      expect(config).toEqual({
+        port: 3000
+      });
+    });
+
+    it('schema with default values works correctly', () => {
+      const schema = z.object({
+        port: z.number(),
+        debug: z.boolean().default(false)
+      });
+
+      const env = {
+        PORT: '3000'
+      };
+
+      const config = configEnvy({ env, schema });
+      expect(config).toEqual({
+        port: 3000,
+        debug: false
+      });
+    });
   });
 
   describe('complex scenarios', () => {

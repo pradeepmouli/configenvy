@@ -8,6 +8,11 @@ interface ParsedEntry {
   value: string;
 }
 
+interface SchemaPath {
+  path: string[];
+  pathKey: string; // joined path for lookup, e.g., "log.level"
+}
+
 /**
  * Strip prefix from key and return normalized key, or null if prefix doesn't match
  */
@@ -78,8 +83,165 @@ function segmentsToFlatCamelCase(segments: string[], delimiter = '_'): string {
 }
 
 /**
+ * Extract all leaf paths from a Zod schema or schema-like object
+ * Supports both Zod v3 (typeName) and Zod v4 (type) structures
+ */
+function extractSchemaPaths(schema: unknown, currentPath: string[] = []): SchemaPath[] {
+  const paths: SchemaPath[] = [];
+
+  if (!schema || typeof schema !== 'object') {
+    return paths;
+  }
+
+  // Handle Zod schemas (both v3 and v4)
+  if ('_def' in schema) {
+    const def = (schema as { _def: Record<string, unknown> })._def;
+
+    // Check for object type (Zod v4 uses 'type', Zod v3 uses 'typeName')
+    const isObject = def['type'] === 'object' || def['typeName'] === 'ZodObject';
+
+    if (isObject) {
+      // Get shape - v4 stores it directly, v3 might have it as a function
+      let shape: Record<string, unknown> | undefined;
+      if (typeof def['shape'] === 'function') {
+        shape = (def['shape'] as () => Record<string, unknown>)();
+      } else if (def['shape'] && typeof def['shape'] === 'object') {
+        shape = def['shape'] as Record<string, unknown>;
+      }
+
+      if (shape) {
+        for (const [key, value] of Object.entries(shape)) {
+          const newPath = [...currentPath, key];
+          const nestedPaths = extractSchemaPaths(value, newPath);
+          if (nestedPaths.length === 0) {
+            // Leaf node
+            paths.push({ path: newPath, pathKey: newPath.join('.') });
+          } else {
+            paths.push(...nestedPaths);
+          }
+        }
+        return paths;
+      }
+    }
+
+    // Handle wrapper types (ZodOptional, ZodDefault, ZodNullable)
+    const typeName = def['typeName'] as string | undefined;
+    const type = def['type'] as string | undefined;
+
+    if (
+      typeName === 'ZodOptional' ||
+      typeName === 'ZodDefault' ||
+      typeName === 'ZodNullable' ||
+      type === 'optional' ||
+      type === 'default' ||
+      type === 'nullable'
+    ) {
+      if ('innerType' in def) {
+        return extractSchemaPaths(def['innerType'], currentPath);
+      }
+    }
+
+    // Leaf type (ZodString, ZodNumber, etc.) - return empty to indicate this is a leaf
+    return [];
+  }
+
+  // Handle plain objects (for non-Zod schema-like objects)
+  if (!Array.isArray(schema)) {
+    for (const [key, value] of Object.entries(schema as Record<string, unknown>)) {
+      if (key.startsWith('_') || key.startsWith('~')) continue; // Skip internal properties
+      if (typeof value === 'function') continue; // Skip methods
+
+      const newPath = [...currentPath, key];
+      if (value && typeof value === 'object') {
+        const nestedPaths = extractSchemaPaths(value, newPath);
+        if (nestedPaths.length === 0) {
+          paths.push({ path: newPath, pathKey: newPath.join('.') });
+        } else {
+          paths.push(...nestedPaths);
+        }
+      }
+    }
+  }
+
+  return paths;
+}
+
+/**
+ * Generate all possible path interpretations for segments
+ * e.g., ['PORT', 'NUMBER'] -> [['portNumber'], ['port', 'number']]
+ */
+function generatePathInterpretations(segments: string[], delimiter = '_'): string[][] {
+  const interpretations: string[][] = [];
+  const n = segments.length;
+
+  // Generate all possible ways to group consecutive segments
+  // For n segments, we have 2^(n-1) ways to group them
+  const numCombinations = 1 << (n - 1);
+
+  for (let mask = 0; mask < numCombinations; mask++) {
+    const path: string[] = [];
+    let currentGroup: string[] = [segments[0]!];
+
+    for (let i = 1; i < n; i++) {
+      if (mask & (1 << (i - 1))) {
+        // Start a new group
+        path.push(groupToCamelCase(currentGroup, delimiter));
+        currentGroup = [segments[i]!];
+      } else {
+        // Continue current group
+        currentGroup.push(segments[i]!);
+      }
+    }
+    path.push(groupToCamelCase(currentGroup, delimiter));
+    interpretations.push(path);
+  }
+
+  return interpretations;
+}
+
+/**
+ * Convert a group of segments to camelCase
+ */
+function groupToCamelCase(group: string[], delimiter = '_'): string {
+  if (delimiter === '_') {
+    return group
+      .map((s, index) => {
+        const lower = s.toLowerCase();
+        return index === 0 ? lower : lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join('');
+  }
+
+  // For custom delimiters
+  return group
+    .map((segment) => segmentToCamelCase(segment))
+    .map((s, index) => (index === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1)))
+    .join('');
+}
+
+/**
+ * Find the matching schema path for an env key's segments
+ */
+function findMatchingSchemaPath(
+  segments: string[],
+  schemaPaths: Map<string, string[]>,
+  delimiter = '_'
+): string[] | null {
+  const interpretations = generatePathInterpretations(segments, delimiter);
+
+  for (const interpretation of interpretations) {
+    const pathKey = interpretation.join('.');
+    if (schemaPaths.has(pathKey)) {
+      return interpretation;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Build a nested configuration object from environment variables.
- * Only nests when multiple entries share a common prefix.
+ * Only nests when multiple entries share a common prefix (when no schema provided).
  */
 function buildConfig(
   env: NodeJS.ProcessEnv,
@@ -128,6 +290,51 @@ function buildConfig(
 }
 
 /**
+ * Build a configuration object guided by schema structure
+ */
+function buildConfigWithSchema(
+  env: NodeJS.ProcessEnv,
+  schema: unknown,
+  options: Omit<ConfigEnvyOptions, 'schema'> = {}
+): ConfigObject {
+  const { prefix, coerce = true, delimiter = '_' } = options;
+
+  // Extract all paths from schema
+  const schemaPathList = extractSchemaPaths(schema);
+  const schemaPaths = new Map<string, string[]>();
+  for (const sp of schemaPathList) {
+    schemaPaths.set(sp.pathKey, sp.path);
+  }
+
+  const result: ConfigObject = {};
+
+  for (const [key, value] of Object.entries(env)) {
+    if (value === undefined) continue;
+
+    const normalizedKey = stripPrefix(key, prefix, delimiter);
+    if (normalizedKey === null) continue;
+
+    const segments = splitKey(normalizedKey, delimiter);
+    if (segments.length === 0) continue;
+
+    const finalValue: ConfigValue = coerce ? coerceValue(value) : value;
+
+    // Try to find a matching schema path
+    const matchedPath = findMatchingSchemaPath(segments, schemaPaths, delimiter);
+
+    if (matchedPath) {
+      setNestedValue(result, matchedPath, finalValue);
+    } else {
+      // No schema match - fall back to flat camelCase
+      const camelKey = segmentsToFlatCamelCase(segments, delimiter);
+      result[camelKey] = finalValue;
+    }
+  }
+
+  return result;
+}
+
+/**
  * Create a typed configuration object from environment variables.
  * Automatically nests only when multiple entries share a common prefix.
  *
@@ -164,12 +371,15 @@ export function configEnvy<T extends z.ZodType>(
   options: ConfigEnvyOptions<T> = {}
 ): InferConfig<T> {
   const env = options.env ?? process.env;
-  const config = buildConfig(env, options);
 
   if (options.schema) {
+    // Use schema-guided building when schema is provided
+    const config = buildConfigWithSchema(env, options.schema, options);
     return options.schema.parse(config) as InferConfig<T>;
   }
 
+  // Use smart nesting heuristic when no schema
+  const config = buildConfig(env, options);
   return config as InferConfig<T>;
 }
 

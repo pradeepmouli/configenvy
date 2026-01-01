@@ -4,7 +4,9 @@ Automatically map `process.env` entries to strongly-typed config objects with ca
 
 ## Features
 
-- **Smart Nesting**: Only nests when multiple entries share a common prefix
+- **Schema-Guided Nesting**: When a Zod schema is provided, the structure follows the schema exactly
+  - `PORT_NUMBER` → `{ portNumber }` or `{ port: { number } }` depending on your schema
+- **Smart Nesting** (without schema): Automatically nests when multiple entries share a prefix
   - `PORT_NUMBER=1234` → `{ portNumber: 1234 }` (single entry stays flat)
   - `LOG_LEVEL` + `LOG_PATH` → `{ log: { level: ..., path: ... } }` (multiple entries get nested)
 - **Type Coercion**: Automatically converts strings to numbers and booleans
@@ -70,31 +72,39 @@ const config = configEnvy({ prefix: 'APP' });
 // Result: { port: 3000, debug: true }
 ```
 
-### With Zod Schema Validation
+### With Zod Schema (Schema-Guided Nesting)
+
+When you provide a schema, configenvy uses the schema structure to determine nesting. This gives you full control over the output shape:
 
 ```typescript
 import { configEnvy } from 'configenvy';
 import { z } from 'zod';
 
-// Define your expected config shape
-// (must match the smart nesting behavior based on your env vars)
+// The schema defines exactly how env vars map to your config
 const schema = z.object({
-  port: z.number().min(1000).max(65535),  // APP_PORT (single entry)
-  log: z.object({                          // APP_LOG_* (multiple entries)
+  portNumber: z.number(),                  // PORT_NUMBER -> portNumber (flat)
+  log: z.object({                          // LOG_LEVEL -> log.level (nested)
     level: z.enum(['debug', 'info', 'warn', 'error']),
-    path: z.string()
+    path: z.string()                       // LOG_PATH -> log.path
   }),
-  database: z.object({                     // APP_DATABASE_* (multiple entries)
-    host: z.string(),
-    port: z.number(),
+  database: z.object({
+    host: z.string(),                      // DATABASE_HOST -> database.host
+    port: z.number(),                      // DATABASE_PORT -> database.port
     ssl: z.boolean().default(false)
   })
 });
 
-// Fully typed config with validation
+// Given: PORT_NUMBER=3000, LOG_LEVEL=debug, LOG_PATH=/var/log, DATABASE_HOST=localhost, DATABASE_PORT=5432
 const config = configEnvy({ schema, prefix: 'APP' });
 
-// TypeScript knows: config.port is number, config.log.level is 'debug' | 'info' | 'warn' | 'error'
+// Result matches schema structure exactly:
+// {
+//   portNumber: 3000,
+//   log: { level: 'debug', path: '/var/log' },
+//   database: { host: 'localhost', port: 5432, ssl: false }
+// }
+
+// TypeScript knows: config.portNumber is number, config.log.level is 'debug' | 'info' | 'warn' | 'error'
 ```
 
 ### Reusable Config Loader
@@ -154,7 +164,7 @@ Parse environment variables into a nested config object.
 |--------|------|---------|-------------|
 | `env` | `NodeJS.ProcessEnv` | `process.env` | Custom environment object |
 | `prefix` | `string` | - | Only include vars starting with this prefix |
-| `schema` | `z.ZodType` | - | Zod schema for validation and type inference |
+| `schema` | `z.ZodType` | - | Zod schema for validation, type inference, and structure guidance |
 | `coerce` | `boolean` | `true` | Auto-convert strings to numbers/booleans |
 | `delimiter` | `string` | `'_'` | Delimiter for nesting (e.g., `'__'` for double underscore) |
 
