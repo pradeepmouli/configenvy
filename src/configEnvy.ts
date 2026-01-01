@@ -414,15 +414,12 @@ export function createConfigEnvy<T extends z.ZodType>(
 }
 
 /**
-
  * Recursively apply default values to a config object
  * @example
  * const config = { log: { level: 'debug' } };
  * const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
  * const finalConfig = applyDefaults(config, defaults);
  * // finalConfig = { port: 3000, log: { level: 'debug', path: '/var/log' } }
-
-
  */
 export function applyDefaults<T extends ConfigObject>(
   config: Partial<T>,

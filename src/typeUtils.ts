@@ -2,8 +2,7 @@ import type {
   CamelCasedPropertiesDeep,
   ScreamingSnakeCase,
   Simplify,
-  UnionToIntersection,
-  UppercaseLetter
+  UnionToIntersection
 } from 'type-fest';
 
 /**
@@ -107,12 +106,8 @@ type InternalBooleanString =
   | 'n'
   | 'y'
   | 'no'
-  | 'yes'
-  | 'True'
-  | 'False'
-  | 'No'
-  | 'Yes';
-export type BooleanString = Simplify<Uppercase<InternalBooleanString> | InternalBooleanString>;
+  | 'yes';
+export type BooleanString = Simplify<InternalBooleanString>;
 
 export type NumberString = `${number}`;
 
