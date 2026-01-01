@@ -1,6 +1,6 @@
-# TypeScript Project Template
+# configenvy
 
-A modern TypeScript project template with best practices, tooling configuration, and multi-agent support.
+Automatically map `process.env` entries to strongly-typed config objects with camelCase fields and nested structures.
 
 ## Features
 
@@ -15,221 +15,169 @@ A modern TypeScript project template with best practices, tooling configuration,
 - **Type Utilities**: `ToEnv<T>`, `FromEnv<T>`, `WithPrefix<T>` for type-level transformations
 - **Zero Dependencies Runtime**: Uses Zod only when you opt-in to schema validation
 
+## Installation
+
+```bash
+npm install configenvy
+# or
+pnpm add configenvy
+# or
+yarn add configenvy
+```
+
 ## Quick Start
 
-### Prerequisites
+```typescript
+import { configEnvy } from 'configenvy';
 
-- Node.js >= 20.0.0
-- pnpm >= 9.0.0
+// Given these environment variables:
+// PORT_NUMBER=3000          <- single PORT_* entry, stays flat
+// LOG_LEVEL=debug           <- multiple LOG_* entries, gets nested
+// LOG_PATH=/var/log
+// DATABASE_HOST=localhost   <- multiple DATABASE_* entries, gets nested
+// DATABASE_PORT=5432
 
-### Installation
+const config = configEnvy();
 
-1. Clone or use this template:
-
-```bash
-git clone <your-repo-url>
-cd template-ts
+// Result:
+// {
+//   portNumber: 3000,        // flat (only one PORT_* entry)
+//   log: {                   // nested (multiple LOG_* entries)
+//     level: 'debug',
+//     path: '/var/log'
+//   },
+//   database: {              // nested (multiple DATABASE_* entries)
+//     host: 'localhost',
+//     port: 5432
+//   }
+// }
 ```
 
-2. Install dependencies:
+## Usage
 
-```bash
-pnpm install
+### Basic Usage
+
+```typescript
+import { configEnvy } from 'configenvy';
+
+// Load all environment variables
+const config = configEnvy();
 ```
 
-4. Initialize Husky (first time only):
+### With Prefix Filtering
 
-```bash
-pnpm prepare
+```typescript
+// Given: APP_PORT=3000, APP_DEBUG=true, OTHER_VAR=ignored
+const config = configEnvy({ prefix: 'APP' });
+
+// Result: { port: 3000, debug: true }
 ```
 
-### Development
+### With Zod Schema (Schema-Guided Nesting)
 
-```bash
-# Run in development mode with watch
-pnpm dev
+When you provide a schema, configenvy uses the schema structure to determine nesting. This gives you full control over the output shape:
 
-# Build the project
-pnpm build
+```typescript
+import { configEnvy } from 'configenvy';
+import { z } from 'zod';
 
-# Run tests
-pnpm test
+// The schema defines exactly how env vars map to your config
+const schema = z.object({
+  portNumber: z.number(),                  // PORT_NUMBER -> portNumber (flat)
+  log: z.object({                          // LOG_LEVEL -> log.level (nested)
+    level: z.enum(['debug', 'info', 'warn', 'error']),
+    path: z.string()                       // LOG_PATH -> log.path
+  }),
+  database: z.object({
+    host: z.string(),                      // DATABASE_HOST -> database.host
+    port: z.number(),                      // DATABASE_PORT -> database.port
+    ssl: z.boolean().default(false)
+  })
+});
 
-# Run tests with coverage
-pnpm test:coverage
+// Given: PORT_NUMBER=3000, LOG_LEVEL=debug, LOG_PATH=/var/log, DATABASE_HOST=localhost, DATABASE_PORT=5432
+const config = configEnvy({ schema, prefix: 'APP' });
 
-# Lint code
-pnpm lint
+// Result matches schema structure exactly:
+// {
+//   portNumber: 3000,
+//   log: { level: 'debug', path: '/var/log' },
+//   database: { host: 'localhost', port: 5432, ssl: false }
+// }
 
-# Format code
-pnpm format
-
-# Check formatting without changes
-pnpm format:check
-
-# Type check without emitting
-pnpm type-check
+// TypeScript knows: config.portNumber is number, config.log.level is 'debug' | 'info' | 'warn' | 'error'
 ```
 
-## Project Structure
+### Reusable Config Loader
 
-```
-.
-├── src/                  # Source files
-│   └── index.ts         # Entry point
-├── dist/                # Build output (generated)
-├── AGENTS.md            # AI agent instructions
-├── mcp.json             # MCP server configuration
-├── package.json         # Project manifest
-├── tsconfig.json        # TypeScript configuration
-└── README.md            # This file
-```
+```typescript
+import { createConfigEnvy } from 'configenvy';
+import { z } from 'zod';
 
-## MCP Configuration
+const schema = z.object({
+  port: z.number(),
+  debug: z.boolean()
+});
 
-This template includes MCP (Model Context Protocol) configuration for AI agents:
+// Create a reusable loader with preset options
+const loadConfig = createConfigEnvy({
+  prefix: 'APP',
+  schema
+});
 
-- **Context7**: Provides up-to-date library documentation
-  - Set `CONTEXT7_API_KEY` in your environment to enable
+// Use in your app
+const config = loadConfig();
 
-## Agent Instructions
-
-See [AGENTS.md](AGENTS.md) for comprehensive guidelines on:
-
-- Coding standards and style
-- Preferred technologies
-- Workflow conventions
-- Agent-specific instructions
-
-## Scripts
-
-| Script               | Description                             |
-| -------------------- | --------------------------------------- |
-| `pnpm dev`           | Run in development mode with hot reload |
-| `pnpm build`         | Compile TypeScript to JavaScript        |
-| `pnpm start`         | Run the compiled application            |
-| `pnpm test`          | Run tests with Vitest                   |
-| `pnpm test:coverage` | Run tests with coverage report          |
-| `pnpm lint`          | Lint code with oxlint                   |
-| `pnpm format`        | Format code with oxfmt                  |
-| `pnpm format:check`  | Check code formatting                   |
-| `pnpm type-check`    | Type check without building             |
-| `pnpm clean`         | Remove build artifacts                  |
-| `pnpm changeset`     | Create a new changeset                  |
-| `pnpm version`       | Version packages using changesets       |
-| `pnpm release`       | Build and publish to npm                |
-
-## Configuration Files
-
-### TypeScript (`tsconfig.json`)
-
-- Strict type checking enabled
-- ES2022 target with ESNext modules
-- Decorator support enabled
-- Source maps and declarations generated
-
-### Package Manager
-
-- Uses pnpm with workspaces support
-- Minimum pnpm version: 9.0.0
-- Minimum Node.js version: 20.0.0
-
-## Coding Standards
-
-This project follows strict coding standards:
-
-### Naming Conventions
-
-- **camelCase**: Variables and functions
-- **PascalCase**: Classes, types, interfaces, components, files/folders
-- **snake_case**: Script files (non-module)
-- **#prefix**: Private class fields (ES2022)
-
-### Code Style
-
-- 2 spaces for indentation
-- Single quotes for strings
-- Semicolons required
-- No trailing commas
-
-### Best Practices
-
-- Async/await over Promises
-- Strict equality (`===`)
-- Explicit return types
-- JSDoc for public APIs only
-- Dependency injection with decorators
-
-See [AGENTS.md](AGENTS.md) for complete guidelines.
-
-## Version Management
-
-This project uses [Changesets](https://github.com/changesets/changesets) for version management:
-
-### Creating a Changeset
-
-When you make changes that should be released:
-
-```bash
-pnpm changeset
+// Override for testing
+const testConfig = loadConfig({
+  env: { APP_PORT: '3000', APP_DEBUG: 'true' }
+});
 ```
 
-Follow the prompts to:
-1. Select the type of change (major, minor, patch)
-2. Describe your changes
+### Custom Delimiter for Nesting
 
-### Releasing
+By default, each underscore creates a new nesting level. Use `delimiter: '__'` for double-underscore nesting:
 
-The release process is automated via GitHub Actions:
+```typescript
+// Given: LOG__LEVEL=debug, LOG__FILE_PATH=/var/log
+const config = configEnvy({ delimiter: '__' });
 
-1. **Make changes** and create changesets
-2. **Merge to main** - GitHub Actions will create a "Version Packages" PR
-3. **Review and merge** the Version Packages PR
-4. **Automatic release** - Package is published to npm and GitHub release is created
-
-### Manual Release
-
-If needed, you can release manually:
-
-```bash
-pnpm version  # Update versions
-git add .
-git commit -m "chore: version packages"
-pnpm release  # Publish to npm
+// Result: { log: { level: 'debug', filePath: '/var/log' } }
+// Note: Single underscores become camelCase within the segment
 ```
 
-## CI/CD Workflows
+### Disable Type Coercion
 
-### CI Workflow (`.github/workflows/ci.yml`)
+```typescript
+const config = configEnvy({ coerce: false });
+// All values remain strings
+```
 
-Runs on push and pull requests:
-- Code quality checks (formatting, linting, type checking)
-- Tests on Node.js 20 and 22
-- Build verification
-- Coverage reporting
+## API Reference
 
-### Release Workflow (`.github/workflows/release.yml`)
+### `configEnvy(options?)`
 
-Runs on main branch:
-- Creates version PRs using Changesets
-- Publishes to npm when version PR is merged
-- Creates GitHub releases automatically
-- Supports pre-release versions
+Parse environment variables into a nested config object.
 
-### Dependency Updates
+#### Options
 
-Dependabot is configured to:
-- Check for npm package updates weekly
-- Check for GitHub Actions updates weekly
-- Group updates by category (TypeScript, testing, etc.)
-- Auto-label and assign PRs
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `env` | `NodeJS.ProcessEnv` | `process.env` | Custom environment object |
+| `prefix` | `string` | - | Only include vars starting with this prefix |
+| `schema` | `z.ZodType` | - | Zod schema for validation, type inference, and structure guidance |
+| `coerce` | `boolean` | `true` | Auto-convert strings to numbers/booleans |
+| `delimiter` | `string` | `'_'` | Delimiter for nesting (e.g., `'__'` for double underscore) |
 
-## Pre-commit Hooks
+### `createConfigEnvy(defaultOptions)`
 
-Husky and lint-staged are configured to run on every commit:
-- Format code with oxfmt
-- Lint and fix with oxlint
-- Ensure code quality before commits
+Create a reusable config loader with preset options.
+
+```typescript
+const loadConfig = createConfigEnvy({ prefix: 'APP', schema: mySchema });
+const config = loadConfig(); // Uses defaults
+const testConfig = loadConfig({ env: testEnv }); // Override env
+```
 
 ## Type Utilities
 
@@ -304,15 +252,14 @@ type Env = SchemaToEnv<z.infer<typeof schema>>;
 
 ## Type Coercion Rules
 
-1. Follow the coding standards in [AGENTS.md](AGENTS.md)
-2. Write tests for new features
-3. Use conventional commits
-4. Ensure all tests pass before submitting PR
+| Input | Output |
+|-------|--------|
+| `'true'`, `'TRUE'`, `'True'` | `true` |
+| `'false'`, `'FALSE'`, `'False'` | `false` |
+| `'123'`, `'-42'` | `123`, `-42` (integers) |
+| `'3.14'`, `'-2.5'` | `3.14`, `-2.5` (floats) |
+| Other strings | Unchanged |
 
 ## License
 
 MIT
-
----
-
-_Generated from template-ts on December 19, 2025_

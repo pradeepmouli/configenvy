@@ -1,5 +1,13 @@
 import { describe, it, expectTypeOf } from 'vitest';
-import type { ToEnv, FromEnv, WithPrefix, WithoutPrefix, SchemaToEnv } from './typeUtils.js';
+import type {
+  ToEnv,
+  FromEnv,
+  WithPrefix,
+  WithoutPrefix,
+  SchemaToEnv,
+  BooleanString,
+  NumberString
+} from './typeUtils.js';
 import { z } from 'zod';
 
 describe('Type Utilities', () => {
@@ -13,8 +21,8 @@ describe('Type Utilities', () => {
       type Env = ToEnv<Config>;
 
       expectTypeOf<Env>().toEqualTypeOf<{
-        PORT: string;
-        DEBUG: string;
+        PORT: NumberString;
+        DEBUG: BooleanString;
       }>();
     });
 
@@ -30,7 +38,7 @@ describe('Type Utilities', () => {
       type Env = ToEnv<Config>;
 
       expectTypeOf<Env>().toEqualTypeOf<{
-        PORT_NUMBER: string;
+        PORT_NUMBER: NumberString;
         LOG_LEVEL: string;
         LOG_PATH: string;
       }>();
@@ -50,7 +58,7 @@ describe('Type Utilities', () => {
 
       expectTypeOf<Env>().toEqualTypeOf<{
         DATABASE_CONNECTION_HOST: string;
-        DATABASE_CONNECTION_PORT: string;
+        DATABASE_CONNECTION_PORT: `${number}`;
       }>();
     });
   });
@@ -58,14 +66,14 @@ describe('Type Utilities', () => {
   describe('FromEnv', () => {
     it('converts env keys to camelCase', () => {
       type Env = {
-        PORT_NUMBER: string;
+        PORT_NUMBER: NumberString;
         LOG_LEVEL: string;
       };
 
       type Config = FromEnv<Env>;
 
       expectTypeOf<Config>().toEqualTypeOf<{
-        portNumber: string;
+        portNumber: number;
         logLevel: string;
       }>();
     });
@@ -116,7 +124,7 @@ describe('Type Utilities', () => {
       type Env = SchemaToEnv<z.infer<typeof schema>>;
 
       expectTypeOf<Env>().toEqualTypeOf<{
-        PORT: string;
+        PORT: NumberString;
         LOG_LEVEL: string;
       }>();
     });
