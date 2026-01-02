@@ -5,7 +5,7 @@
 **Created**: 2026-01-02
 **Priority**: [ ] High | [x] Medium | [ ] Low
 **Component**: `src/utils.ts` (coerceValue function)
-**Status**: [x] Planned | [ ] In Progress | [ ] Complete
+**Status**: [ ] Planned | [ ] In Progress | [x] Complete
 
 ## Input
 User description: "and support for array values when env value has the form foo,bar,zed"
@@ -55,41 +55,41 @@ This is a backward-compatible enhancement. Existing single-value environment var
 **Phase 1: Implementation**
 
 **Tasks**:
-1. [ ] Update `ConfigValue` type in `src/types.ts` to include array type
-2. [ ] Modify `coerceValue` function in `src/utils.ts` to detect and parse comma-separated values
-3. [ ] Add unit tests for array coercion in `src/utils.test.ts`
-4. [ ] Add integration tests in `src/configEnvy.test.ts` for full config with arrays
-5. [ ] Run full test suite and ensure no regressions
-6. [ ] Update build and verify type checking passes
+1. [X] Update `ConfigValue` type in `src/types.ts` to include array type
+2. [X] Modify `coerceValue` function in `src/utils.ts` to detect and parse comma-separated values
+3. [X] Add unit tests for array coercion in `src/utils.test.ts`
+4. [X] Add integration tests in `src/configEnvy.test.ts` for full config with arrays
+5. [X] Run full test suite and ensure no regressions
+6. [X] Update build and verify type checking passes
 
 **Acceptance Criteria**:
-- [ ] `coerceValue("foo,bar,zed")` returns `['foo', 'bar', 'zed']`
-- [ ] `coerceValue("1,2,3")` returns `[1, 2, 3]` (with type coercion)
-- [ ] `coerceValue("true,false")` returns `[true, false]`
-- [ ] Mixed type arrays work correctly (e.g., `"1,hello,true"` → `[1, 'hello', true]`)
-- [ ] Single values without commas remain unchanged
-- [ ] All existing tests continue to pass
-- [ ] Type checking passes with updated ConfigValue type
+- [X] `coerceValue("foo,bar,zed")` returns `['foo', 'bar', 'zed']`
+- [X] `coerceValue("1,2,3")` returns `[1, 2, 3]` (with type coercion)
+- [X] `coerceValue("true,false")` returns `[true, false]`
+- [X] Mixed type arrays work correctly (e.g., `"1,hello,true"` → `[1, 'hello', true]`)
+- [X] Single values without commas remain unchanged
+- [X] All existing tests continue to pass
+- [X] Type checking passes with updated ConfigValue type
 
 ## Testing
-- [ ] Unit tests added/updated
+- [X] Unit tests added/updated
   - Array parsing with various value types
   - Edge cases (empty elements, single values, etc.)
   - Mixed type arrays
-- [ ] Integration tests pass
+- [X] Integration tests pass
   - Full config objects with array values
   - Nested configs with arrays
   - Schema validation with arrays (if applicable)
-- [ ] Manual testing complete
-- [ ] Edge cases verified
+- [X] Manual testing complete
+- [X] Edge cases verified
   - Empty strings between commas
   - Whitespace handling
   - Single comma (edge case)
 
 ## Verification Checklist
-- [ ] Changes implemented as described
-- [ ] Tests written and passing
-- [ ] No regressions in existing functionality
+- [X] Changes implemented as described
+- [X] Tests written and passing
+- [X] No regressions in existing functionality
 - [ ] Documentation updated (if needed) - README examples for array usage
 - [ ] Code reviewed (if appropriate)
 
