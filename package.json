@@ -1,5 +1,5 @@
 {
-  "name": "configenvy",
+  "name": "@pmouli/configenvy",
   "version": "0.1.0",
   "description": "Automatically map process.env to strongly-typed, nested config objects with camelCase fields",
   "keywords": [
