@@ -166,6 +166,10 @@
 - [ ] T083 [US1] Implement atomic file write with pre-flight validation in command handler in `packages/env-y-config/src/commands/generate.ts`
 - [ ] T084 [US1] Implement error handling with helpful messages for invalid schemas in `packages/env-y-config/src/commands/generate.ts`
 - [ ] T085 [US1] Create integration tests for CLI in `packages/env-y-config/tests/integration/cli-*.test.ts`
+- [ ] T085a [P] [US1] Implement cyclic schema reference detection in parsers in `packages/env-y-config/src/parsers/*.ts` with clear error message
+- [ ] T085b [P] [US1] Add test for cyclic schema detection in `packages/env-y-config/tests/unit/parsers/cyclic-detection.test.ts`
+- [ ] T085c [P] [US1] Implement naming collision detection for nested object flattening in `packages/env-y-config/src/generators/env-formatter.ts`
+- [ ] T085d [US1] Add test for collision detection in `packages/env-y-config/tests/unit/generators/collision-detection.test.ts`
 
 #### Documentation for User Story 1
 
@@ -264,6 +268,12 @@
 - [ ] T140 [US2] Implement atomic file write with pre-flight validation in command handler in `packages/config-y-env/src/commands/generate.ts`
 - [ ] T141 [US2] Implement error handling with helpful messages for invalid .env files in `packages/config-y-env/src/commands/generate.ts`
 - [ ] T142 [US2] Create integration tests for CLI in `packages/config-y-env/tests/integration/cli-*.test.ts`
+- [ ] T142a [P] [US2] Implement detection for unsupported TypeScript constructs in `packages/config-y-env/src/parsers/typescript.ts` with graceful fallback
+- [ ] T142b [US2] Add test for unsupported TypeScript handling in `packages/config-y-env/tests/unit/parsers/unsupported-types.test.ts`
+- [ ] T142c [US2] Create type inference accuracy measurement suite in `packages/config-y-env/tests/integration/accuracy-benchmark.test.ts` testing against corpus of 50+ real-world .env files
+- [ ] T142d [US2] Add accuracy reporting in `packages/config-y-env/tests/integration/accuracy-report.ts` generating metrics for CI dashboard
+- [ ] T142e [P] [US2] Implement detection for unsupported TypeScript constructs (complex generics, mapped types) in `packages/config-y-env/src/parsers/typescript.ts`
+- [ ] T142f [US2] Add test for unsupported TypeScript handling with graceful fallback in `packages/config-y-env/tests/unit/parsers/unsupported-typescript.test.ts`
 
 #### Documentation for User Story 2
 
@@ -303,6 +313,7 @@
 - [ ] T156 [P] [US3] Configure extension manifest in `packages/vscode-envyconfig/package.json` with all commands and menus
 - [ ] T157 [P] [US3] Implement activation events for supported file types (*.env, *.ts, *.json) in `packages/vscode-envyconfig/package.json`
 - [ ] T158 [P] [US3] Create extension output channel "EnvyConfig Tools" in `packages/vscode-envyconfig/src/extension.ts`
+- [ ] T158a [P] [US3] Implement structured logging service in `packages/vscode-envyconfig/src/services/logger.ts` with timestamps and severity levels
 - [ ] T159 [P] [US3] Implement CLI tool detection and installation prompt in `packages/vscode-envyconfig/src/services/cli-detector.ts`
 - [ ] T160 [US3] Add extension version and status to output channel in `packages/vscode-envyconfig/src/extension.ts`
 
@@ -324,6 +335,7 @@
 - [ ] T171 [P] [US3] Implement "Quick Convert" command in `packages/vscode-envyconfig/src/commands/quick-convert.ts` with smart detection
 - [ ] T172 [US3] Register all three commands in extension activation in `packages/vscode-envyconfig/src/extension.ts`
 - [ ] T173 [US3] Add error notifications for command failures in `packages/vscode-envyconfig/src/commands/*.ts`
+- [ ] T173a [US3] Add logging calls to all command handlers in `packages/vscode-envyconfig/src/commands/*.ts` for execution, completion, and errors
 - [ ] T174 [US3] Create integration tests for commands in `packages/vscode-envyconfig/tests/integration/commands/*.test.ts`
 
 #### WebView Panel Implementation (4-5 days)
@@ -337,7 +349,9 @@
 - [ ] T181 [P] [US3] Add "Copy to Clipboard" button functionality in `packages/vscode-envyconfig/src/webview/preview-panel.ts`
 - [ ] T182 [US3] Implement format tabs for toggling between formats in `packages/vscode-envyconfig/src/webview/preview-panel.ts`
 - [ ] T183 [US3] Add loading and error states in WebView in `packages/vscode-envyconfig/src/webview/preview-panel.ts`
+- [ ] T183a [US3] Add logging calls to WebView preview panel in `packages/vscode-envyconfig/src/webview/preview-panel.ts` for preview updates, file generation, and errors
 - [ ] T184 [US3] Create WebView styling in `packages/vscode-envyconfig/media/style.css`
+- [ ] T184a [US3] Create unit test for extension logging in `packages/vscode-envyconfig/tests/unit/services/logger.test.ts`
 
 #### Context Menu Integration (2-3 days)
 
@@ -357,6 +371,10 @@
 - [ ] T191 [P] [US3] Add settings UI in command palette with quick-pick options in `packages/vscode-envyconfig/src/commands/open-settings.ts`
 - [ ] T192 [US3] Implement settings persistence (user vs workspace levels) in `packages/vscode-envyconfig/src/services/settings-manager.ts`
 - [ ] T193 [US3] Add settings change listener to update WebView in `packages/vscode-envyconfig/src/extension.ts`
+- [ ] T193a [US3] Implement structured logging service in `packages/vscode-envyconfig/src/services/logger.ts` with timestamp and severity
+- [ ] T193b [US3] Add logging calls to all command handlers in `packages/vscode-envyconfig/src/commands/*.ts` for execution, completion, and errors
+- [ ] T193c [US3] Add logging calls to WebView preview panel in `packages/vscode-envyconfig/src/webview/preview-panel.ts` for preview updates and file generation
+- [ ] T193d [US3] Create unit test for logging output in `packages/vscode-envyconfig/tests/unit/services/logger.test.ts`
 
 #### Documentation for User Story 3
 
@@ -441,7 +459,12 @@
 - [ ] T222 Manual smoke testing of both CLI tools on all platforms (macOS, Linux, Windows)
 - [ ] T223 Manual smoke testing of VS Code extension on VS Code 1.85.0+ (Linux, macOS, Windows)
 - [ ] T224 Load test CLI tools with large files (10,000+ lines) to verify performance
+- [ ] T224a Create WebView preview performance test in `packages/vscode-envyconfig/tests/integration/webview-perf.test.ts` measuring render time for inputs up to 100KB
+- [ ] T224b Add preview latency thresholds to CI (fail if >500ms for typical 10KB input)
 - [ ] T225 Test edge cases: invalid inputs, malformed files, permission errors, disk full
+- [ ] T225a Test cyclic schema references with clear error output
+- [ ] T225b Test unsupported TypeScript constructs with fallback behavior
+- [ ] T225c Test naming collision detection with helpful error messages
 
 ### Publishing & Release
 
@@ -469,12 +492,12 @@
 |-------|----------|-------|--------|
 | **Phase 1: Infrastructure** | 2-3 days | T001-T011 | 📋 Ready |
 | **Phase 2: Foundation** | 3-4 days | T012-T033 | 📋 Blocked by Phase 1 |
-| **Phase 3: User Story 1** | 8-12 days | T034-T088 | 📋 Blocked by Phase 2 |
-| **Phase 4: User Story 2** | 10-14 days | T089-T146 | 📋 Blocked by Phase 3 |
-| **Phase 5: User Story 3** | 10-14 days | T147-T197 | 📋 Blocked by Phase 4 |
+| **Phase 3: User Story 1** | 8-12 days | T034-T088 (+4) | 📋 Blocked by Phase 2 |
+| **Phase 4: User Story 2** | 10-14 days | T089-T146 (+4) | 📋 Blocked by Phase 3 |
+| **Phase 5: User Story 3** | 10-14 days | T147-T197 (+4) | 📋 Blocked by Phase 4 |
 | **Phase 6: User Story 4** | 4-5 days | T198-T210 | 📋 Blocked by Phase 5 |
-| **Phase 7: Polish** | 5-7 days | T211-T235 | 📋 Blocked by Phase 6 |
-| **TOTAL** | **42-62 days** | **235 tasks** | **📋 Ready to start** |
+| **Phase 7: Polish** | 5-7 days | T211-T235 (+3) | 📋 Blocked by Phase 6 |
+| **TOTAL** | **42-62 days** | **251 tasks** | **📋 Ready to start** |
 
 ---
 

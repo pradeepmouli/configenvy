@@ -1,8 +1,8 @@
 # Clarification Session Summary: CLI Tools & VS Code Extension
 
-**Session Date**: January 5, 2026  
-**Feature**: `002-cli-vscode-tools`  
-**Branch**: `002-cli-vscode-tools`  
+**Session Date**: January 5, 2026
+**Feature**: `002-cli-vscode-tools`
+**Branch**: `002-cli-vscode-tools`
 **Status**: ✅ **CLARIFICATIONS COMPLETE**
 
 ---
@@ -26,23 +26,27 @@ All 5 critical architectural decisions have been clarified and documented. The s
 
 **Question**: How should the CLI tools and extension be organized in the monorepo and published?
 
-**Answer**: **Option B** - Monorepo with shared core
+**Answer**: **Option B** - Dual-Package Monorepo
 
 **Details**:
-- Single npm package: `@envyconfig/tools` (contains both CLI tools: `env-y-config` and `config-y-env`)
-- Extension published separately: `envyconfig-tools` to VS Code Marketplace
-- Shared library: Core conversion logic shared between CLI tools via internal package
-- Independent versioning: Each package can be released on its own schedule
+- **Separate npm packages** for each CLI tool:
+  - `@envyconfig/env-y-config` - Converts schemas to .env files
+  - `@envyconfig/config-y-env` - Converts .env files to types
+- **Extension published separately** to VS Code Marketplace: `envyconfig-vscode`
+- **Shared utilities**: Common code extracted to shared module (not published as separate package)
+- **Independent versioning**: Each CLI can be released on its own schedule
 
 **Impact on Implementation**:
 - Monorepo structure: 3 packages under `packages/`
-  - `packages/cli-tools/` - Contains both CLI tools + entry points
-  - `packages/vscode-extension/` - VS Code extension source
-  - `packages/shared/` - Shared utilities and types
-- Publishing workflow: CLI to npm registry, Extension to VS Code Marketplace
-- Task decomposition: Can work on CLI and extension independently
+  - `packages/env-y-config/` - First CLI tool with entry point
+  - `packages/config-y-env/` - Second CLI tool with entry point
+  - `packages/vscode-envyconfig/` - VS Code extension source
+  - Shared utilities within each package or as shared internal modules
+- Publishing workflow: Each CLI to npm registry separately, Extension to VS Code Marketplace
+- Task decomposition: Teams can work on CLIs and extension independently
+- Installation: Users install only the CLI tools they need (`npm install @envyconfig/env-y-config` OR `npm install @envyconfig/config-y-env`)
 
-**Architectural Benefit**: Allows CLI-only users to use tools without extension overhead while maintaining code reuse
+**Architectural Benefit**: Users install only what they need, simpler dependency management, independent version lifecycles, avoids namespace bloat from bundling unrelated CLIs
 
 ---
 
@@ -153,7 +157,7 @@ DATABASE_HOST="<DATABASE_HOST>"
 DATABASE_PORT="<DATABASE_PORT>"
 DATABASE_PASSWORD="<DATABASE_PASSWORD>"
 
-# API Configuration  
+# API Configuration
 API_KEY="<API_KEY>"
 API_SECRET="<API_SECRET>"
 

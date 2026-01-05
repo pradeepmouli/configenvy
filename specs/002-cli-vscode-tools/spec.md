@@ -1,8 +1,8 @@
 # Feature Specification: CLI Tools & VS Code Extension for envyconfig
 
-**Feature Branch**: `002-cli-vscode-tools`  
-**Created**: January 3, 2026  
-**Status**: Draft  
+**Feature Branch**: `002-cli-vscode-tools`
+**Created**: January 3, 2026
+**Status**: Draft
 **Input**: CLI tools (env-y-config and config-y-env) and VS Code extension for envyconfig
 
 ## User Scenarios & Testing *(mandatory)*
@@ -87,6 +87,9 @@ A team manages multiple microservices with environment configuration for differe
 - How does the tool behave when output file path already exists?
 - What error handling occurs for invalid schema files or malformed `.env` syntax?
 - How are very large `.env` files handled (1000+ variables)?
+- How are naming collisions handled when flattening nested objects? (e.g., both `database.host` and `database_host` in schema)
+- How does the system handle cyclic schema references (schema A references B, B references A)?
+- How are unsupported TypeScript type constructs (complex generics, mapped types) handled in ts-morph parser?
 
 
 ## Requirements *(mandatory)*
@@ -101,6 +104,7 @@ A team manages multiple microservices with environment configuration for differe
 - **FR-004**: Tool MUST require `--type` parameter when input format is TypeScript to specify which export to use
 - **FR-005**: Tool MUST generate realistic sample values for each field type (e.g., "localhost" for host strings, "5432" for database ports)
 - **FR-006**: Tool MUST flatten nested object structures into environment variable naming conventions (e.g., `database.host` becomes `DATABASE_HOST`)
+- **FR-006a**: Tool MUST detect and report naming collisions (e.g., both `database.host` and `database_host` flattening to same name) and fail with clear error message
 - **FR-007**: Tool MUST support `--prefix` flag to add a consistent prefix to all generated environment variables
 - **FR-008**: Tool MUST support `--include` flag to specify which fields to include (comma-separated)
 - **FR-009**: Tool MUST support `--exclude` flag to specify which fields to skip
@@ -110,6 +114,8 @@ A team manages multiple microservices with environment configuration for differe
 - **FR-013**: Tool MUST write output as `.env` format with one variable per line as `KEY=value`
 - **FR-014**: Tool MUST validate that output path is writable before attempting file generation
 - **FR-015**: Tool MUST provide helpful error messages for invalid input files or unsupported formats
+- **FR-015a**: Tool MUST detect cyclic schema references and report with clear error message
+- **FR-015b**: Tool MUST detect unsupported TypeScript constructs (complex generics, mapped types) and report with fallback options
 
 #### config-y-env CLI Tool
 
@@ -180,14 +186,18 @@ A team manages multiple microservices with environment configuration for differe
 - **SC-015**: "Copy to Clipboard" button copies complete, unmodified conversion output
 - **SC-016**: Extension handles missing or invalid files gracefully with informative error messages
 - **SC-017**: Settings panel allows configuration changes that persist across extension reloads
+- **SC-018**: All extension operations (commands, file generation, preview updates) logged to "EnvyConfig Tools" output channel with timestamps and severity levels
+- **SC-019**: Extension startup and activation logged with version and CLI tool detection results
 
 #### User Experience Success
 
-- **SC-018**: Developers can generate their first `.env` file from a schema within 3 minutes of tool installation
-- **SC-019**: Developers can generate TypeScript types from an existing `.env` file without consulting documentation
-- **SC-020**: The complete workflow from schema definition to type-safe code takes <5 minutes for typical use cases
-- **SC-021**: Error messages are understandable to developers without deep knowledge of the tools
-- **SC-022**: Documentation with examples is available for all commands and options
+- **SC-020**: Developers can generate their first `.env` file from a schema within 3 minutes of tool installation
+- **SC-021**: Developers can generate TypeScript types from an existing `.env` file without consulting documentation
+- **SC-022**: The complete workflow from schema definition to type-safe code takes <5 minutes for typical use cases
+- **SC-023**: Error messages are understandable to developers without deep knowledge of the tools
+- **SC-024**: Documentation with examples is available for all commands and options
+- **SC-025**: Type inference accuracy measured against test corpus meets or exceeds 90% for standard patterns (primitives, nested objects, arrays, enums)
+- **SC-026**: VS Code extension WebView preview renders within 500ms for typical conversions (<10KB input)
 
 ---
 
@@ -255,4 +265,3 @@ This specification is now **clarified and ready for planning**:
 2. **→ Planning Phase**: Create detailed task breakdown and implementation timeline using `/speckit.plan`
 3. **Implementation**: Teams can begin development with clear architectural decisions
 4. **Testing**: Use acceptance scenarios to create test cases
-
