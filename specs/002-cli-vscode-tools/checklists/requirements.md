@@ -1,7 +1,7 @@
 # Specification Quality Checklist: CLI Tools & VS Code Extension
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning  
-**Created**: January 3, 2026  
+**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Created**: January 3, 2026
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -49,5 +49,5 @@ This specification is ready to proceed to:
 
 ---
 
-**Approved by**: AI Specification Agent  
+**Approved by**: AI Specification Agent
 **Approval Date**: January 3, 2026

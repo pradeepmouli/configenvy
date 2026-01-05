@@ -1,7 +1,7 @@
 # Specification Created Successfully ✅
 
-**Branch**: `002-cli-vscode-tools`  
-**Created**: January 3, 2026  
+**Branch**: `002-cli-vscode-tools`
+**Created**: January 3, 2026
 **Status**: Complete & Ready for Planning
 
 ---
@@ -184,5 +184,5 @@ The specification is **business-focused** (not code-focused) and ready for:
 
 **Status**: ✅ **SPECIFICATION COMPLETE & APPROVED**
 
-**Created**: January 3, 2026  
+**Created**: January 3, 2026
 **Ready for**: Planning Phase (`/speckit.plan`)
