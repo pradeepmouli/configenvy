@@ -3,7 +3,15 @@
  * @module parsers/typescript
  */
 
-import { Project, SourceFile, InterfaceDeclaration, TypeAliasDeclaration, PropertySignature, TypeNode, SyntaxKind } from 'ts-morph';
+import {
+  Project,
+  SourceFile,
+  InterfaceDeclaration,
+  TypeAliasDeclaration,
+  PropertySignature,
+  TypeNode,
+  SyntaxKind
+} from 'ts-morph';
 import type { SchemaField, ParsedSchema } from '../types.js';
 import { createParseError } from '../utils/errors.js';
 
@@ -31,9 +39,10 @@ export async function parseTypeScriptFile(
 
     if (!targetDeclaration) {
       const availableExports = listAvailableExports(sourceFile);
-      const exportList = availableExports.length > 0
-        ? `Available exports: ${availableExports.join(', ')}`
-        : 'No exported interfaces or types found';
+      const exportList =
+        availableExports.length > 0
+          ? `Available exports: ${availableExports.join(', ')}`
+          : 'No exported interfaces or types found';
 
       throw createParseError(
         filePath,
@@ -159,9 +168,7 @@ export async function listTypeScriptExports(filePath: string): Promise<string[]>
 /**
  * Extract fields from interface or type declaration
  */
-function extractFields(
-  declaration: InterfaceDeclaration | TypeAliasDeclaration
-): SchemaField[] {
+function extractFields(declaration: InterfaceDeclaration | TypeAliasDeclaration): SchemaField[] {
   const fields: SchemaField[] = [];
 
   if (declaration.getKind() === SyntaxKind.InterfaceDeclaration) {

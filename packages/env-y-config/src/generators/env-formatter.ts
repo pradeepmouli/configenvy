@@ -3,17 +3,20 @@
  * @module generators/env-formatter
  */
 
-import type { SchemaField, ParsedSchema, EnvGeneratorOptions, EnvEntry, GeneratedEnv } from '../types.js';
+import type {
+  SchemaField,
+  ParsedSchema,
+  EnvGeneratorOptions,
+  EnvEntry,
+  GeneratedEnv
+} from '../types.js';
 import { toEnvKey, addPrefix, formatEnvContent } from '../utils/formatting.js';
 import { generateSampleValue } from './sample-values.js';
 
 /**
  * Check if field should be included based on filters
  */
-function shouldIncludeField(
-  fieldName: string,
-  options: EnvGeneratorOptions
-): boolean {
+function shouldIncludeField(fieldName: string, options: EnvGeneratorOptions): boolean {
   // Check include list
   if (options.include && options.include.length > 0) {
     return options.include.some((pattern) => fieldName.includes(pattern));
@@ -126,10 +129,7 @@ function flattenFields(
  * // env.content contains formatted .env file
  * ```
  */
-export function generateEnvFile(
-  schema: ParsedSchema,
-  options: EnvGeneratorOptions
-): GeneratedEnv {
+export function generateEnvFile(schema: ParsedSchema, options: EnvGeneratorOptions): GeneratedEnv {
   // Detect naming collisions
   const collisions = detectCollisions(schema.fields);
   if (collisions.size > 0) {
@@ -156,7 +156,9 @@ export function generateEnvFile(
 /**
  * Create default generator options
  */
-export function createDefaultOptions(overrides?: Partial<EnvGeneratorOptions>): EnvGeneratorOptions {
+export function createDefaultOptions(
+  overrides?: Partial<EnvGeneratorOptions>
+): EnvGeneratorOptions {
   return {
     comments: true,
     requiredOnly: false,

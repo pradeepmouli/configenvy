@@ -74,10 +74,7 @@ async function parseInputFile(
 /**
  * Main command handler for generating .env files
  */
-export async function generateCommand(
-  input: string,
-  options: CommandOptions
-): Promise<void> {
+export async function generateCommand(input: string, options: CommandOptions): Promise<void> {
   const startTime = performance.now();
 
   try {

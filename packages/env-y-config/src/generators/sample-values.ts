@@ -11,13 +11,13 @@ import type { SchemaField } from '../types.js';
  */
 function extractKeywords(field: SchemaField): string[] {
   const name = field.name.toLowerCase();
-  
+
   // Check for high-priority compound patterns in description first
   if (field.description) {
     const desc = field.description.toLowerCase();
     // Special compound patterns that override field name
     if (desc.includes('api key') || desc.includes('api_key')) {
-      return ['KEY'];  // Return immediately for this specific pattern
+      return ['KEY']; // Return immediately for this specific pattern
     }
   }
 

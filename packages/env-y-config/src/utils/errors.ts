@@ -127,10 +127,7 @@ export function createInvalidFormatError(filePath: string): ConversionError {
 /**
  * Create error with output writing details
  */
-export function createOutputError(
-  filePath: string,
-  reason: string
-): ConversionError {
+export function createOutputError(filePath: string, reason: string): ConversionError {
   return new ConversionError(
     ErrorCategory.OUTPUT,
     EXIT_CODES.OUTPUT_ERROR,
@@ -143,10 +140,7 @@ export function createOutputError(
 /**
  * Create error with validation failure details
  */
-export function createValidationError(
-  message: string,
-  detail?: string
-): ConversionError {
+export function createValidationError(message: string, detail?: string): ConversionError {
   return new ConversionError(
     ErrorCategory.VALIDATION,
     EXIT_CODES.VALIDATION_ERROR,
