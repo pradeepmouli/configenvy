@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build and coverage artifacts
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# Workspace and tooling
+.specify/
+.changeset/
+.github/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Tests and specs
+tests/
+__tests__/
+*.test.ts
+*.spec.ts
+specs/
+
+# Logs and temp
+*.log
+tmp/
+temp/
+*.tmp
+
+# Lockfiles
+pnpm-lock.yaml
+package-lock.json
+yarn.lock

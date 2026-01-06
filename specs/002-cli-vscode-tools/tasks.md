@@ -1,6 +1,6 @@
 # Tasks: CLI Tools & VS Code Extension for envyconfig
 
-**Input**: Design documents from `/specs/002-cli-vscode-tools/`  
+**Input**: Design documents from `/specs/002-cli-vscode-tools/`
 **Prerequisites**: [spec.md](spec.md) (user stories), [plan.md](plan.md) (implementation approach), [data-model.md](data-model.md) (types)
 
 **Tests**: Per Constitution Principle II (Test-Driven Public APIs), unit tests are MANDATORY for all public APIs. Tests are included for all CLI commands, parsers, generators, and extension commands.
@@ -48,34 +48,34 @@
 
 ### Shared Utilities & Type Definitions
 
-- [ ] T012 Create base types file `packages/env-y-config/src/types.ts` with SchemaField, ParsedSchema, ConversionOptions interfaces
-- [ ] T013 Create base types file `packages/config-y-env/src/types.ts` with EnvVariable, TypedField, InferenceOptions interfaces
-- [ ] T014 Create error handling module `packages/env-y-config/src/utils/errors.ts` with ConversionError class and exit codes
-- [ ] T015 Create error handling module `packages/config-y-env/src/utils/errors.ts` with detailed error messages
-- [ ] T016 Create logger utility `packages/env-y-config/src/utils/logger.ts` for structured logging
-- [ ] T017 Create logger utility `packages/config-y-env/src/utils/logger.ts` for structured logging
-- [ ] T018 Create file I/O utility `packages/env-y-config/src/utils/file-io.ts` with atomic write functionality
-- [ ] T019 Create file I/O utility `packages/config-y-env/src/utils/file-io.ts` with pre-flight validation
-- [ ] T020 Create formatting utility `packages/env-y-config/src/utils/formatting.ts` for .env output formatting
+- [x] T012 Create base types file `packages/env-y-config/src/types.ts` with SchemaField, ParsedSchema, ConversionOptions interfaces
+- [x] T013 Create base types file `packages/config-y-env/src/types.ts` with EnvVariable, TypedField, InferenceOptions interfaces
+- [x] T014 Create error handling module `packages/env-y-config/src/utils/errors.ts` with ConversionError class and exit codes
+- [x] T015 Create error handling module `packages/config-y-env/src/utils/errors.ts` with detailed error messages
+- [x] T016 Create logger utility `packages/env-y-config/src/utils/logger.ts` for structured logging
+- [x] T017 Create logger utility `packages/config-y-env/src/utils/logger.ts` for structured logging
+- [x] T018 Create file I/O utility `packages/env-y-config/src/utils/file-io.ts` with atomic write functionality
+- [x] T019 Create file I/O utility `packages/config-y-env/src/utils/file-io.ts` with pre-flight validation
+- [x] T020 Create formatting utility `packages/env-y-config/src/utils/formatting.ts` for .env output formatting
 
 ### CLI Framework Setup
 
-- [ ] T021 Create Commander.js setup in `packages/env-y-config/src/cli.ts` with root command definition
-- [ ] T022 Create Commander.js setup in `packages/config-y-env/src/cli.ts` with root command definition
-- [ ] T023 Create CLI entry point `packages/env-y-config/bin/env-y-config.js` for npm script execution
-- [ ] T024 Create CLI entry point `packages/config-y-env/bin/config-y-env.js` for npm script execution
-- [ ] T025 Add npm bin configuration to `packages/env-y-config/package.json` for global CLI availability
-- [ ] T026 Add npm bin configuration to `packages/config-y-env/package.json` for global CLI availability
-- [ ] T027 Implement global `--help` command displaying all available commands and options
-- [ ] T028 Implement global `--version` flag showing package version
+- [x] T021 Create Commander.js setup in `packages/env-y-config/src/cli.ts` with root command definition
+- [x] T022 Create Commander.js setup in `packages/config-y-env/src/cli.ts` with root command definition
+- [x] T023 Create CLI entry point `packages/env-y-config/bin/env-y-config.js` for npm script execution
+- [x] T024 Create CLI entry point `packages/config-y-env/bin/config-y-env.js` for npm script execution
+- [x] T025 Add npm bin configuration to `packages/env-y-config/package.json` for global CLI availability
+- [x] T026 Add npm bin configuration to `packages/config-y-env/package.json` for global CLI availability
+- [x] T027 Implement global `--help` command displaying all available commands and options
+- [x] T028 Implement global `--version` flag showing package version
 
 ### Testing Infrastructure
 
-- [ ] T029 Create test utilities file `packages/env-y-config/tests/test-helpers.ts` with fixture generators
-- [ ] T030 Create test utilities file `packages/config-y-env/tests/test-helpers.ts` with fixture generators
-- [ ] T031 Create mock data generators `packages/env-y-config/tests/fixtures/` for sample schemas and .env files
-- [ ] T032 Create mock data generators `packages/config-y-env/tests/fixtures/` for .env files
-- [ ] T033 Set up test configuration in `vitest.config.ts` for both packages
+- [x] T029 Create test utilities file `packages/env-y-config/tests/test-helpers.ts` with fixture generators
+- [x] T030 Create test utilities file `packages/config-y-env/tests/test-helpers.ts` with fixture generators
+- [x] T031 Create mock data generators `packages/env-y-config/tests/fixtures/` for sample schemas and .env files
+- [x] T032 Create mock data generators `packages/config-y-env/tests/fixtures/` for .env files
+- [x] T033 Set up test configuration in `vitest.config.ts` for both packages
 
 **Checkpoint**: Foundation complete. CLI framework operational. File I/O with atomic writes implemented. Ready for user story work.
 
@@ -122,12 +122,12 @@
 
 #### TypeScript Interface Parser (3-4 days)
 
-- [ ] T054 [P] [US1] Implement ts-morph-based parser in `packages/env-y-config/src/parsers/typescript.ts` to extract type information
-- [ ] T055 [P] [US1] Find and extract named interface/type from TypeScript file in `packages/env-y-config/src/parsers/typescript.ts`
-- [ ] T056 [P] [US1] Convert TypeScript types to field definitions (string, number, boolean, arrays) in `packages/env-y-config/src/parsers/typescript.ts`
-- [ ] T057 [P] [US1] Extract JSDoc comments as field descriptions in `packages/env-y-config/src/parsers/typescript.ts`
-- [ ] T058 [US1] Handle union types and enum types in TypeScript parser in `packages/env-y-config/src/parsers/typescript.ts`
-- [ ] T059 [US1] Create unit tests for TypeScript parser in `packages/env-y-config/tests/unit/parsers/typescript.test.ts`
+- [x] T054 [P] [US1] Implement ts-morph-based parser in `packages/env-y-config/src/parsers/typescript.ts` to extract type information
+- [x] T055 [P] [US1] Find and extract named interface/type from TypeScript file in `packages/env-y-config/src/parsers/typescript.ts`
+- [x] T056 [P] [US1] Convert TypeScript types to field definitions (string, number, boolean, arrays) in `packages/env-y-config/src/parsers/typescript.ts`
+- [x] T057 [P] [US1] Extract JSDoc comments as field descriptions in `packages/env-y-config/src/parsers/typescript.ts`
+- [x] T058 [US1] Handle union types and enum types in TypeScript parser in `packages/env-y-config/src/parsers/typescript.ts`
+- [x] T059 [US1] Create unit tests for TypeScript parser in `packages/env-y-config/tests/unit/parsers/typescript.test.ts`
 
 #### JSON Object Parser (1-2 days)
 
@@ -526,7 +526,7 @@
 
 ### Scenario: 3-Person Team
 
-**Team A** (env-y-config): 
+**Team A** (env-y-config):
 - Parallel T002, T045-T062 (parsers)
 - Parallel T063-T073 (generators)
 - Sequential T074-T087 (CLI + docs)
@@ -542,7 +542,7 @@ All teams can work in parallel after Phase 1, with Phase 3 team starting immedia
 
 ---
 
-**Status**: ✅ Task breakdown complete and ready for implementation  
-**Total Tasks**: 235  
-**Estimated Duration**: 42-62 days (6-8 weeks with team)  
+**Status**: ✅ Task breakdown complete and ready for implementation
+**Total Tasks**: 235
+**Estimated Duration**: 42-62 days (6-8 weeks with team)
 **Next Step**: Begin Phase 1 infrastructure setup
