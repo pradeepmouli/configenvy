@@ -57,7 +57,7 @@ describe('VS Code extension activation', () => {
 
     extension.activate(mockContext);
 
-    expect(vscode.window.createOutputChannel).toHaveBeenCalledWith('EnvyConfig Tools');
+    expect(vscode.window.createOutputChannel).toHaveBeenCalledWith('ObjectEnvy Tools');
   });
 
   it('should register generate env command', () => {
@@ -68,7 +68,7 @@ describe('VS Code extension activation', () => {
     extension.activate(mockContext);
 
     expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-      'envyconfig.generateEnv',
+      'objectenvy.generateEnv',
       expect.any(Function)
     );
   });
@@ -81,7 +81,7 @@ describe('VS Code extension activation', () => {
     extension.activate(mockContext);
 
     expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-      'envyconfig.generateTypes',
+      'objectenvy.generateTypes',
       expect.any(Function)
     );
   });
@@ -94,7 +94,7 @@ describe('VS Code extension activation', () => {
     extension.activate(mockContext);
 
     expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-      'envyconfig.quickConvert',
+      'objectenvy.quickConvert',
       expect.any(Function)
     );
   });

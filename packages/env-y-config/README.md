@@ -303,7 +303,7 @@ Contributions are welcome! Please see the main repository for guidelines.
 ## Related
 
 - [config-y-env](../config-y-env) - Generate TypeScript types from `.env` files
-- [vscode-envyconfig](../vscode-envyconfig) - VS Code extension
+- [objectenvy-vscode](../objectenvy-vscode) - VS Code extension
 
 ## Support
 

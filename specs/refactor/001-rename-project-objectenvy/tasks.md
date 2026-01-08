@@ -55,38 +55,38 @@ This plan breaks work into phases with independently testable user stories, stri
 - Story Goal: Single CLI `objectenvy-cli` provides identical commands/flags and outputs.
 - Independent Test Criteria: CLI integration tests pass with same inputs/outputs as pre-merge.
 
-- [ ] T028 [US2] Scaffold packages/objectenvy-cli/package.json with bin/objectenvy-cli.js
-- [ ] T029 [P] [US2] Create packages/objectenvy-cli/src/cli.ts (unified entry)
-- [ ] T030 [US2] Migrate commands from packages/env-y-config/src/** into packages/objectenvy-cli/src/commands/
-- [ ] T031 [US2] Migrate commands from packages/config-y-env/src/** into packages/objectenvy-cli/src/commands/
-- [ ] T032 [US2] Consolidate parsers/generators in packages/objectenvy-cli/src/**
-- [ ] T033 [P] [US2] Wire bin script packages/objectenvy-cli/bin/objectenvy-cli.js
-- [ ] T034 [US2] Update workspace deps to point CLI to packages/objectenvy
-- [ ] T035 [US2] Port CLI tests to packages/objectenvy-cli/tests/integration/cli-exec.test.ts
-- [ ] T036 [US2] Verify parity by running pre/post snapshots in specs/refactor/001-rename-project-objectenvy/quickstart.md
+- [X] T028 [US2] Scaffold packages/objectenvy-cli/package.json with bin/objectenvy-cli.js
+- [X] T029 [P] [US2] Create packages/objectenvy-cli/src/cli.ts (unified entry)
+- [X] T030 [US2] Migrate commands from packages/env-y-config/src/** into packages/objectenvy-cli/src/commands/
+- [X] T031 [US2] Migrate commands from packages/config-y-env/src/** into packages/objectenvy-cli/src/commands/
+- [X] T032 [US2] Consolidate parsers/generators in packages/objectenvy-cli/src/**
+- [X] T033 [P] [US2] Wire bin script packages/objectenvy-cli/bin/objectenvy-cli.js
+- [X] T034 [US2] Update workspace deps to point CLI to packages/objectenvy
+- [X] T035 [US2] Port CLI tests to packages/objectenvy-cli/tests/integration/cli-exec.test.ts
+- [X] T036 [US2] Verify parity by running pre/post snapshots in specs/refactor/001-rename-project-objectenvy/quickstart.md
 
 ## Phase 5 — User Story 3: VS Code Extension Renamed and Functional
 
 - Story Goal: `objectenvy-vscode` activates and commands work identically to `vscode-envyconfig`.
 - Independent Test Criteria: Activation and commands tests pass; dev host manual verification succeeds.
 
-- [ ] T037 [US3] Rename directory packages/vscode-envyconfig → packages/objectenvy-vscode
-- [ ] T038 [US3] Update extension manifest at packages/objectenvy-vscode/package.json (name, displayName, publisher, commands)
-- [ ] T039 [P] [US3] Update activation code at packages/objectenvy-vscode/src/extension.ts
-- [ ] T040 [US3] Update command IDs and contributes.commands in packages/objectenvy-vscode/package.json
-- [ ] T041 [US3] Adjust extension tests path at packages/objectenvy-vscode/tests/
-- [ ] T042 [US3] Validate activation via VS Code Extension Host per quickstart
+- [X] T037 [US3] Rename directory packages/vscode-envyconfig → packages/objectenvy-vscode
+- [X] T038 [US3] Update extension manifest at packages/objectenvy-vscode/package.json (name, displayName, publisher, commands)
+- [X] T039 [P] [US3] Update activation code at packages/objectenvy-vscode/src/extension.ts
+- [X] T040 [US3] Update command IDs and contributes.commands in packages/objectenvy-vscode/package.json
+- [X] T041 [US3] Adjust extension tests path at packages/objectenvy-vscode/tests/
+- [X] T042 [US3] Validate activation via VS Code Extension Host per quickstart
 
 ## Phase 6 — User Story 4: Cross-Package Integration Holds
 
 - Story Goal: All inter-package imports resolve; workspace builds and tests pass end-to-end.
 - Independent Test Criteria: Build succeeds at root; cross-package import tests pass.
 
-- [ ] T043 [US4] Update pnpm-workspace.yaml with objectenvy, objectenvy-cli, objectenvy-vscode
-- [ ] T044 [P] [US4] Update inter-package dependencies in packages/*/package.json to new names
-- [ ] T045 [US4] Update root tsconfig references/paths for new packages
-- [ ] T046 [US4] Run full workspace build and tests (pnpm -w build; pnpm -w test)
-- [ ] T047 [US4] Verify cross-import tests still pass in tests/integration/cross-imports.test.ts
+- [X] T043 [US4] Update pnpm-workspace.yaml with objectenvy, objectenvy-cli, objectenvy-vscode
+- [X] T044 [P] [US4] Update inter-package dependencies in packages/*/package.json to new names
+- [X] T045 [US4] Update root tsconfig references/paths for new packages
+- [X] T046 [US4] Run full workspace build and tests (pnpm -w build; pnpm -w test)
+- [X] T047 [US4] Verify cross-import tests still pass in tests/integration/cross-imports.test.ts
 
 ## Final Phase — Polish & Cross-Cutting
 

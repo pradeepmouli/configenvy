@@ -110,6 +110,31 @@ importers:
         specifier: ^4.3.4
         version: 4.3.4
 
+  packages/objectenvy-cli:
+    dependencies:
+      commander:
+        specifier: ^12.0.0
+        version: 12.1.0
+      objectenvy:
+        specifier: workspace:*
+        version: link:../objectenvy
+      ts-morph:
+        specifier: ^21.0.1
+        version: 21.0.1
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.27
+      tsx:
+        specifier: ^4.7.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.27)
+
   packages/vscode-envyconfig:
     devDependencies:
       '@types/node':
