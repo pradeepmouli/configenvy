@@ -10,7 +10,7 @@ export type ConfigArray = Array<ConfigPrimitive | ConfigObject>;
 
 export type ConfigValue = ConfigPrimitive | ConfigObject | ConfigArray;
 
-export interface ConfigEnvyOptions<T extends z.ZodType = z.ZodType> {
+export interface ObjectEnvyOptions<T extends z.ZodType = z.ZodType> {
   /**
    * Filter environment variables by prefix.
    * e.g., "APP" will only include variables starting with "APP_"

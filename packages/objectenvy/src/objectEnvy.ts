@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { ConfigEnvyOptions, ConfigObject, ConfigValue, InferConfig } from './types.js';
+import type { ObjectEnvyOptions, ConfigObject, ConfigValue, InferConfig } from './types.js';
 import { coerceValue, setNestedValue } from './utils.js';
 
 interface ParsedEntry {
@@ -245,7 +245,7 @@ function findMatchingSchemaPath(
  */
 function buildConfig(
   env: NodeJS.ProcessEnv,
-  options: Omit<ConfigEnvyOptions, 'schema'> = {}
+  options: Omit<ObjectEnvyOptions, 'schema'> = {}
 ): ConfigObject {
   const { prefix, coerce = true, delimiter = '_' } = options;
 
@@ -295,7 +295,7 @@ function buildConfig(
 function buildConfigWithSchema(
   env: NodeJS.ProcessEnv,
   schema: unknown,
-  options: Omit<ConfigEnvyOptions, 'schema'> = {}
+  options: Omit<ObjectEnvyOptions, 'schema'> = {}
 ): ConfigObject {
   const { prefix, coerce = true, delimiter = '_' } = options;
 
@@ -341,14 +341,14 @@ function buildConfigWithSchema(
  * @example
  * // Smart nesting - only nests when multiple entries share a prefix
  * // PORT_NUMBER=1234 LOG_LEVEL=debug LOG_PATH=/var/log
- * const config = configEnvy();
+ * const config = objectEnvy();
  * // Returns: { portNumber: 1234, log: { level: 'debug', path: '/var/log' } }
  * // Note: portNumber is flat (only one PORT_* entry), log is nested (multiple LOG_* entries)
  *
  * @example
  * // With prefix filtering
  * // APP_PORT=3000 APP_DEBUG=true OTHER_VAR=ignored
- * const config = configEnvy({ prefix: 'APP' });
+ * const config = objectEnvy({ prefix: 'APP' });
  * // Returns: { port: 3000, debug: true }
  *
  * @example
@@ -360,15 +360,15 @@ function buildConfigWithSchema(
  *     path: z.string()
  *   })
  * });
- * const config = configEnvy({ schema });
+ * const config = objectEnvy({ schema });
  * // Returns typed config with validation
  */
-export function configEnvy<T extends z.ZodType>(
-  options: ConfigEnvyOptions<T> & { schema: T }
+export function objectEnvy<T extends z.ZodType>(
+  options: ObjectEnvyOptions<T> & { schema: T }
 ): InferConfig<T>;
-export function configEnvy(options?: Omit<ConfigEnvyOptions, 'schema'>): ConfigObject;
-export function configEnvy<T extends z.ZodType>(
-  options: ConfigEnvyOptions<T> = {}
+export function objectEnvy(options?: Omit<ObjectEnvyOptions, 'schema'>): ConfigObject;
+export function objectEnvy<T extends z.ZodType>(
+  options: ObjectEnvyOptions<T> = {}
 ): InferConfig<T> {
   const env = options.env ?? process.env;
 
@@ -387,7 +387,7 @@ export function configEnvy<T extends z.ZodType>(
  * Create a configuration loader with preset options
  *
  * @example
- * const loadConfig = createConfigEnvy({
+ * const loadConfig = createObjectEnvy({
  *   prefix: 'APP',
  *   schema: appConfigSchema
  * });
@@ -395,21 +395,21 @@ export function configEnvy<T extends z.ZodType>(
  * const config = loadConfig(); // Uses preset options
  * const testConfig = loadConfig({ env: testEnv }); // Override env for testing
  */
-export function createConfigEnvy<T extends z.ZodType>(
-  defaultOptions: ConfigEnvyOptions<T> & { schema: T }
-): (overrides?: Partial<Omit<ConfigEnvyOptions<T>, 'schema'>>) => InferConfig<T>;
-export function createConfigEnvy(
-  defaultOptions: Omit<ConfigEnvyOptions, 'schema'>
-): (overrides?: Partial<Omit<ConfigEnvyOptions, 'schema'>>) => ConfigObject;
-export function createConfigEnvy<T extends z.ZodType>(
-  defaultOptions: ConfigEnvyOptions<T>
-): (overrides?: Partial<Omit<ConfigEnvyOptions<T>, 'schema'>>) => ConfigObject | InferConfig<T> {
+export function createObjectEnvy<T extends z.ZodType>(
+  defaultOptions: ObjectEnvyOptions<T> & { schema: T }
+): (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => InferConfig<T>;
+export function createObjectEnvy(
+  defaultOptions: Omit<ObjectEnvyOptions, 'schema'>
+): (overrides?: Partial<Omit<ObjectEnvyOptions, 'schema'>>) => ConfigObject;
+export function createObjectEnvy<T extends z.ZodType>(
+  defaultOptions: ObjectEnvyOptions<T>
+): (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => ConfigObject | InferConfig<T> {
   return (overrides = {}) => {
     const mergedOptions = { ...defaultOptions, ...overrides };
     if ('schema' in mergedOptions && mergedOptions.schema) {
-      return configEnvy(mergedOptions as ConfigEnvyOptions<T> & { schema: T });
+      return objectEnvy(mergedOptions as ObjectEnvyOptions<T> & { schema: T });
     }
-    return configEnvy(mergedOptions as Omit<ConfigEnvyOptions, 'schema'>);
+    return objectEnvy(mergedOptions as Omit<ObjectEnvyOptions, 'schema'>);
   };
 }
 

@@ -1,23 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import * as configenvy from './index.js';
+import * as objectenvy from './index.js';
 
 describe('Module exports', () => {
   it('exports all main functions', () => {
-    expect(configenvy.configEnvy).toBeDefined();
-    expect(configenvy.config).toBeDefined();
-    expect(configenvy.createConfigEnvy).toBeDefined();
-    expect(configenvy.createConfig).toBeDefined();
-    expect(configenvy.applyDefaults).toBeDefined();
-    expect(configenvy.merge).toBeDefined();
-    expect(configenvy.toCamelCase).toBeDefined();
-    expect(configenvy.toSnakeCase).toBeDefined();
-    expect(configenvy.coerceValue).toBeDefined();
+    expect(objectenvy.objectEnvy).toBeDefined();
+    expect(objectenvy.config).toBeDefined();
+    expect(objectenvy.createObjectEnvy).toBeDefined();
+    expect(objectenvy.createConfig).toBeDefined();
+    expect(objectenvy.applyDefaults).toBeDefined();
+    expect(objectenvy.merge).toBeDefined();
+    expect(objectenvy.toCamelCase).toBeDefined();
+    expect(objectenvy.toSnakeCase).toBeDefined();
+    expect(objectenvy.coerceValue).toBeDefined();
   });
 
   it('maintains backward compatibility with aliases', () => {
-    // Original names should still work
-    expect(configenvy.configEnvy).toBe(configenvy.config);
-    expect(configenvy.createConfigEnvy).toBe(configenvy.createConfig);
+    // New names map to config and createConfig
+    expect(objectenvy.objectEnvy).toBe(objectenvy.config);
+    expect(objectenvy.createObjectEnvy).toBe(objectenvy.createConfig);
   });
 });
 
