@@ -1,0 +1,105 @@
+{
+  "name": "objectenvy-vscode",
+  "displayName": "ObjectEnvy Tools",
+  "description": "Convert between schemas, .env files, and TypeScript types with real-time preview",
+  "version": "1.0.0",
+  "publisher": "objectenvy",
+  "icon": "media/icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pradeepmouli/objectenvy"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:json",
+    "workspaceContains:**/.env"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "objectenvy.generateEnv",
+        "title": "Generate .env from Schema",
+        "category": "ObjectEnvy"
+      },
+      {
+        "command": "objectenvy.generateTypes",
+        "title": "Generate Types from .env",
+        "category": "ObjectEnvy"
+      },
+      {
+        "command": "objectenvy.quickConvert",
+        "title": "Quick Convert",
+        "category": "ObjectEnvy"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "when": "resourceExtname == .env",
+          "command": "objectenvy.generateTypes",
+          "group": "objectenvy"
+        },
+        {
+          "when": "resourceExtname == .ts || resourceExtname == .json",
+          "command": "objectenvy.generateEnv",
+          "group": "objectenvy"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ObjectEnvy Tools",
+      "properties": {
+        "objectenvy.prefix": {
+          "type": "string",
+          "default": "",
+          "description": "Prefix for all generated environment variables"
+        },
+        "objectenvy.strict": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use strict type inference mode"
+        },
+        "objectenvy.includeComments": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include field descriptions as comments"
+        },
+        "objectenvy.interfaceName": {
+          "type": "string",
+          "default": "Config",
+          "description": "Default interface name for generated types"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:native": "tsgo -p tsconfig.json",
+    "dev": "tsx watch src/extension.ts",
+    "check:native": "tsgo --noEmit -p tsconfig.json",
+    "test": "vitest",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "lint": "oxlint src",
+    "format": "oxfmt src",
+    "format:check": "oxfmt --check src"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.9.0",
+    "vitest": "^2.0.0"
+  },
+  "dependencies": {}
+}
