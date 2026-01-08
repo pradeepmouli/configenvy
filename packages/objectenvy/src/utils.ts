@@ -64,7 +64,9 @@ const falseEquivalents = new Set(['false', 'no', 'n']);
  * Coerce a string value to the appropriate type
  * Supports comma-separated values which will be parsed as arrays
  */
-export function coerceValue(value: string): string | number | boolean | Array<string | number | boolean> {
+export function coerceValue(
+  value: string
+): string | number | boolean | Array<string | number | boolean> {
   // Check for comma-separated values (arrays)
   if (value.includes(',')) {
     const elements = value

@@ -100,13 +100,7 @@ export type WithoutPrefix<T, Prefix extends string> = {
  */
 export type SchemaToEnv<T> = T extends { _output: infer O } ? ToEnv<O> : ToEnv<T>;
 
-type InternalBooleanString =
-  | 'true'
-  | 'false'
-  | 'n'
-  | 'y'
-  | 'no'
-  | 'yes';
+type InternalBooleanString = 'true' | 'false' | 'n' | 'y' | 'no' | 'yes';
 export type BooleanString = Simplify<InternalBooleanString>;
 
 export type NumberString = `${number}`;
