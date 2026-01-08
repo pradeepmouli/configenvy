@@ -48,10 +48,14 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@types/node@25.0.3)(tsx@4.21.0)(yaml@2.8.2)
       zod:
-        specifier: ^4.3.4
-        version: 4.3.4
+        specifier: ^4.3.5
+        version: 4.3.5
 
   packages/objectenvy:
+    dependencies:
+      zod:
+        specifier: ^4.3.4
+        version: 4.3.5
     devDependencies:
       '@types/node':
         specifier: ^20.19.27
@@ -1618,8 +1622,8 @@ packages:
     engines: {node: '>= 14.6'}
     hasBin: true
 
-  zod@4.3.4:
-    resolution: {integrity: sha512-Zw/uYiiyF6pUT1qmKbZziChgNPRu+ZRneAsMUDU6IwmXdWt5JwcUfy2bvLOCUtz5UniaN/Zx5aFttZYbYc7O/A==}
+  zod@4.3.5:
+    resolution: {integrity: sha512-k7Nwx6vuWx1IJ9Bjuf4Zt1PEllcwe7cls3VNzm4CQ1/hgtFUK2bRNG3rvnpPUhFjmqJKAKtjV576KnUkHocg/g==}
 
 snapshots:
 
@@ -3010,4 +3014,4 @@ snapshots:
 
   yaml@2.8.2: {}
 
-  zod@4.3.4: {}
+  zod@4.3.5: {}
