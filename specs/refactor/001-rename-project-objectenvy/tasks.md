@@ -90,12 +90,12 @@ This plan breaks work into phases with independently testable user stories, stri
 
 ## Final Phase — Polish & Cross-Cutting
 
-- [ ] T048 Update README.md and docs to new package names in README.md
-- [ ] T049 [P] Update specs and references in specs/** (links, names)
-- [ ] T050 Prepare changesets and MAJOR releases at .changeset/**
-- [ ] T051 [P] Add deprecation notices to old packages package.json
-- [ ] T052 Grep and remove stale references to old names (search: configenvy, env-y-config, config-y-env, vscode-envyconfig)
-- [ ] T053 Update CHANGELOG.md with rename and migration notes in CHANGELOG.md
+- [X] T048 Update README.md and docs to new package names in README.md
+- [X] T049 [P] Update specs and references in specs/** (links, names)
+- [X] T050 Prepare changesets and MAJOR releases at .changeset/**
+- [X] T051 [P] Add deprecation notices to old packages package.json
+- [X] T052 Grep and remove stale references to old names (search: configenvy, env-y-config, config-y-env, vscode-envyconfig)
+- [X] T053 Update CHANGELOG.md with rename and migration notes in CHANGELOG.md
 - [ ] T060 Ensure changesets reflect MAJOR bumps for renamed packages in .changeset/**
 - [ ] T061 Run npm publish dry-run for objectenvy and objectenvy-cli (from their package directories)
 - [ ] T062 Package and validate VS Code extension (vsce package / vsce publish --dry-run) for objectenvy-vscode
