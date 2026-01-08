@@ -10,7 +10,7 @@ export type ConfigArray = Array<ConfigPrimitive | ConfigObject>;
 
 export type ConfigValue = ConfigPrimitive | ConfigObject | ConfigArray;
 
-export interface ObjectEnvyOptions<T extends z.ZodType = z.ZodType> {
+export interface ObjectEnvyOptions<T = ConfigObject> {
   /**
    * Filter environment variables by prefix.
    * e.g., "APP" will only include variables starting with "APP_"
@@ -25,7 +25,7 @@ export interface ObjectEnvyOptions<T extends z.ZodType = z.ZodType> {
   /**
    * Zod schema for validation and type inference
    */
-  schema?: T;
+  schema?: T extends ConfigObject ? z.ZodObject<any> : never;
 
   /**
    * Whether to automatically coerce values to numbers/booleans
@@ -41,5 +41,3 @@ export interface ObjectEnvyOptions<T extends z.ZodType = z.ZodType> {
    */
   delimiter?: string;
 }
-
-export type InferConfig<T> = T extends z.ZodType ? z.infer<T> : ConfigObject;

@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { ObjectEnvyOptions, ConfigObject, ConfigValue, InferConfig } from './types.js';
+import type { ObjectEnvyOptions, ConfigObject, ConfigValue } from './types.js';
 import { coerceValue, setNestedValue } from './utils.js';
 
 interface ParsedEntry {
@@ -341,14 +341,14 @@ function buildConfigWithSchema(
  * @example
  * // Smart nesting - only nests when multiple entries share a prefix
  * // PORT_NUMBER=1234 LOG_LEVEL=debug LOG_PATH=/var/log
- * const config = objectEnvy();
+ * const config = objectify();
  * // Returns: { portNumber: 1234, log: { level: 'debug', path: '/var/log' } }
  * // Note: portNumber is flat (only one PORT_* entry), log is nested (multiple LOG_* entries)
  *
  * @example
  * // With prefix filtering
  * // APP_PORT=3000 APP_DEBUG=true OTHER_VAR=ignored
- * const config = objectEnvy({ prefix: 'APP' });
+ * const config = objectify({ prefix: 'APP' });
  * // Returns: { port: 3000, debug: true }
  *
  * @example
@@ -360,34 +360,34 @@ function buildConfigWithSchema(
  *     path: z.string()
  *   })
  * });
- * const config = objectEnvy({ schema });
+ * const config = objectify({ schema });
  * // Returns typed config with validation
  */
-export function objectEnvy<T extends z.ZodType>(
-  options: ObjectEnvyOptions<T> & { schema: T }
-): InferConfig<T>;
-export function objectEnvy(options?: Omit<ObjectEnvyOptions, 'schema'>): ConfigObject;
-export function objectEnvy<T extends z.ZodType>(
+export function objectify(options?: Omit<ObjectEnvyOptions, 'schema'>): ConfigObject;
+export function objectify<T extends ConfigObject>(
+  options: ObjectEnvyOptions<T> & { schema: z.ZodObject<any> }
+): T;
+export function objectify<T extends ConfigObject = ConfigObject>(
   options: ObjectEnvyOptions<T> = {}
-): InferConfig<T> {
+): T | ConfigObject {
   const env = options.env ?? process.env;
 
   if (options.schema) {
     // Use schema-guided building when schema is provided
     const config = buildConfigWithSchema(env, options.schema, options);
-    return options.schema.parse(config) as InferConfig<T>;
+    return (options.schema as z.ZodObject<any>).parse(config) as T;
   }
 
   // Use smart nesting heuristic when no schema
   const config = buildConfig(env, options);
-  return config as InferConfig<T>;
+  return config as T | ConfigObject;
 }
 
 /**
  * Create a configuration loader with preset options
  *
  * @example
- * const loadConfig = createObjectEnvy({
+ * const loadConfig = objectEnvy({
  *   prefix: 'APP',
  *   schema: appConfigSchema
  * });
@@ -395,21 +395,21 @@ export function objectEnvy<T extends z.ZodType>(
  * const config = loadConfig(); // Uses preset options
  * const testConfig = loadConfig({ env: testEnv }); // Override env for testing
  */
-export function createObjectEnvy<T extends z.ZodType>(
-  defaultOptions: ObjectEnvyOptions<T> & { schema: T }
-): (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => InferConfig<T>;
-export function createObjectEnvy(
+export function objectEnvy(
   defaultOptions: Omit<ObjectEnvyOptions, 'schema'>
 ): (overrides?: Partial<Omit<ObjectEnvyOptions, 'schema'>>) => ConfigObject;
-export function createObjectEnvy<T extends z.ZodType>(
+export function objectEnvy<T extends ConfigObject>(
+  defaultOptions: ObjectEnvyOptions<T> & { schema: z.ZodObject<any> }
+): (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => T;
+export function objectEnvy<T extends ConfigObject = ConfigObject>(
   defaultOptions: ObjectEnvyOptions<T>
-): (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => ConfigObject | InferConfig<T> {
+): (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => T | ConfigObject {
   return (overrides = {}) => {
     const mergedOptions = { ...defaultOptions, ...overrides };
     if ('schema' in mergedOptions && mergedOptions.schema) {
-      return objectEnvy(mergedOptions as ObjectEnvyOptions<T> & { schema: T });
+      return objectify(mergedOptions as ObjectEnvyOptions<T> & { schema: z.ZodObject<any> });
     }
-    return objectEnvy(mergedOptions as Omit<ObjectEnvyOptions, 'schema'>);
+    return objectify(mergedOptions as Omit<ObjectEnvyOptions, 'schema'>);
   };
 }
 

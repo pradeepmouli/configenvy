@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
-import { objectEnvy, createObjectEnvy, applyDefaults, merge } from './objectEnvy.js';
+import { objectify, objectEnvy, applyDefaults, merge } from './objectEnvy.js';
 
-describe('objectEnvy', () => {
+describe('objectify', () => {
   describe('basic mapping', () => {
     it('maps simple env vars to flat config', () => {
       const env = {
         PORT: '3000',
         DEBUG: 'true'
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       expect(config).toEqual({
         port: 3000,
         debug: true
@@ -20,7 +20,7 @@ describe('objectEnvy', () => {
       const env = {
         PORT_NUMBER: '1234'
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       // Only one PORT_* entry, so it stays flat
       expect(config).toEqual({
         portNumber: 1234
@@ -32,7 +32,7 @@ describe('objectEnvy', () => {
         LOG_LEVEL: 'debug',
         LOG_PATH: '/var/log'
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       // Multiple LOG_* entries, so they get nested
       expect(config).toEqual({
         log: {
@@ -48,7 +48,7 @@ describe('objectEnvy', () => {
         LOG_LEVEL: 'debug',
         LOG_PATH: '/var/log'
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       // PORT_NUMBER is flat (only one PORT_* entry)
       // LOG_* entries are nested (multiple)
       expect(config).toEqual({
@@ -66,7 +66,7 @@ describe('objectEnvy', () => {
         DATABASE_CONNECTION_PORT: '5432',
         DATABASE_CONNECTION_NAME: 'mydb'
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       // Multiple DATABASE_* entries, so they get nested
       expect(config).toEqual({
         database: {
@@ -83,7 +83,7 @@ describe('objectEnvy', () => {
       const env = {
         DATABASE_CONNECTION_STRING: 'postgres://localhost'
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       // Only one DATABASE_* entry, stays flat
       expect(config).toEqual({
         databaseConnectionString: 'postgres://localhost'
@@ -98,7 +98,7 @@ describe('objectEnvy', () => {
         TIMEOUT: '5000',
         RATE: '0.5'
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       expect(config).toEqual({
         port: 3000,
         timeout: 5000,
@@ -112,7 +112,7 @@ describe('objectEnvy', () => {
         VERBOSE: 'false',
         ENABLED: 'TRUE'
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       expect(config).toEqual({
         debug: true,
         verbose: false,
@@ -126,7 +126,7 @@ describe('objectEnvy', () => {
         PATH: '/var/log/app.log',
         NAME: 'my-app'
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       expect(config).toEqual({
         host: 'localhost',
         path: '/var/log/app.log',
@@ -139,7 +139,7 @@ describe('objectEnvy', () => {
         PORT: '3000',
         DEBUG: 'true'
       };
-      const config = objectEnvy({ env, coerce: false });
+      const config = objectify({ env, coerce: false });
       expect(config).toEqual({
         port: '3000',
         debug: 'true'
@@ -155,7 +155,7 @@ describe('objectEnvy', () => {
         OTHER_VAR: 'ignored',
         RANDOM: 'also ignored'
       };
-      const config = objectEnvy({ env, prefix: 'APP' });
+      const config = objectify({ env, prefix: 'APP' });
       expect(config).toEqual({
         port: 3000,
         debug: true
@@ -168,7 +168,7 @@ describe('objectEnvy', () => {
         APP_LOG_PATH: '/var/log',
         APP_DB_HOST: 'localhost'
       };
-      const config = objectEnvy({ env, prefix: 'APP' });
+      const config = objectify({ env, prefix: 'APP' });
       // LOG has 2 entries, DB has 1 entry
       expect(config).toEqual({
         log: {
@@ -183,7 +183,7 @@ describe('objectEnvy', () => {
       const env = {
         APP_PORT: '3000'
       };
-      const config = objectEnvy({ env, prefix: 'APP_' });
+      const config = objectify({ env, prefix: 'APP_' });
       expect(config).toEqual({
         port: 3000
       });
@@ -196,7 +196,7 @@ describe('objectEnvy', () => {
         LOG__LEVEL: 'debug',
         LOG__FILE_PATH: '/var/log'
       };
-      const config = objectEnvy({ env, delimiter: '__' });
+      const config = objectify({ env, delimiter: '__' });
       expect(config).toEqual({
         log: {
           level: 'debug',
@@ -209,7 +209,7 @@ describe('objectEnvy', () => {
       const env = {
         DATABASE__CONNECTION_STRING: 'postgres://localhost'
       };
-      const config = objectEnvy({ env, delimiter: '__' });
+      const config = objectify({ env, delimiter: '__' });
       // Only one DATABASE__* entry
       expect(config).toEqual({
         databaseConnectionString: 'postgres://localhost'
@@ -221,7 +221,7 @@ describe('objectEnvy', () => {
         DATABASE__CONNECTION_STRING: 'postgres://localhost',
         DATABASE__POOL_SIZE: '10'
       };
-      const config = objectEnvy({ env, delimiter: '__' });
+      const config = objectify({ env, delimiter: '__' });
       expect(config).toEqual({
         database: {
           connectionString: 'postgres://localhost',
@@ -243,7 +243,7 @@ describe('objectEnvy', () => {
         DEBUG: 'true'
       };
 
-      const config = objectEnvy({ env, schema });
+      const config = objectify({ env, schema });
       expect(config).toEqual({
         port: 3000,
         debug: true
@@ -263,7 +263,7 @@ describe('objectEnvy', () => {
         LOG_PATH: '/var/log'
       };
 
-      const config = objectEnvy({ env, schema });
+      const config = objectify({ env, schema });
       expect(config).toEqual({
         log: {
           level: 'debug',
@@ -281,7 +281,7 @@ describe('objectEnvy', () => {
         PORT: '80'
       };
 
-      expect(() => objectEnvy({ env, schema })).toThrow();
+      expect(() => objectify({ env, schema })).toThrow();
     });
 
     it('provides type safety with schema', () => {
@@ -298,7 +298,7 @@ describe('objectEnvy', () => {
         LOG_PATH: '/var/log'
       };
 
-      const config = objectEnvy({ env, schema });
+      const config = objectify({ env, schema });
 
       // TypeScript should infer these types
       const port: number = config.portNumber;
@@ -321,7 +321,7 @@ describe('objectEnvy', () => {
         LOG_LEVEL: 'debug'
       };
 
-      const config = objectEnvy({ env, schema });
+      const config = objectify({ env, schema });
       expect(config).toEqual({
         log: {
           level: 'debug'
@@ -343,7 +343,7 @@ describe('objectEnvy', () => {
         LOG_LEVEL: 'info'
       };
 
-      const config = objectEnvy({ env, schema });
+      const config = objectify({ env, schema });
       expect(config).toEqual({
         portNumber: 3000,
         log: {
@@ -367,7 +367,7 @@ describe('objectEnvy', () => {
         DATABASE_CONNECTION_PORT: '5432'
       };
 
-      const config = objectEnvy({ env, schema });
+      const config = objectify({ env, schema });
       expect(config).toEqual({
         database: {
           connection: {
@@ -388,7 +388,7 @@ describe('objectEnvy', () => {
         PORT: '3000'
       };
 
-      const config = objectEnvy({ env, schema });
+      const config = objectify({ env, schema });
       expect(config).toEqual({
         port: 3000
       });
@@ -404,7 +404,7 @@ describe('objectEnvy', () => {
         PORT: '3000'
       };
 
-      const config = objectEnvy({ env, schema });
+      const config = objectify({ env, schema });
       expect(config).toEqual({
         port: 3000,
         debug: false
@@ -428,7 +428,7 @@ describe('objectEnvy', () => {
         APP_FEATURE_DARK_MODE: 'false'
       };
 
-      const config = objectEnvy({ env, prefix: 'APP' });
+      const config = objectify({ env, prefix: 'APP' });
 
       expect(config).toEqual({
         port: 3000,
@@ -452,7 +452,7 @@ describe('objectEnvy', () => {
     });
 
     it('handles empty env', () => {
-      const config = objectEnvy({ env: {} });
+      const config = objectify({ env: {} });
       expect(config).toEqual({});
     });
 
@@ -461,15 +461,15 @@ describe('objectEnvy', () => {
         PORT: '3000',
         EMPTY: undefined
       };
-      const config = objectEnvy({ env });
+      const config = objectify({ env });
       expect(config).toEqual({ port: 3000 });
     });
   });
 });
 
-describe('createObjectEnvy', () => {
+describe('objectEnvy (config loader factory)', () => {
   it('creates a reusable config loader', () => {
-    const loadConfig = createObjectEnvy({ prefix: 'APP' });
+    const loadConfig = objectEnvy({ prefix: 'APP' });
 
     const env1 = { APP_PORT: '3000' };
     const env2 = { APP_PORT: '4000' };
@@ -484,7 +484,7 @@ describe('createObjectEnvy', () => {
       debug: z.boolean()
     });
 
-    const loadConfig = createObjectEnvy({ prefix: 'APP', schema });
+    const loadConfig = objectEnvy({ prefix: 'APP', schema });
 
     const env = { APP_PORT: '3000', APP_DEBUG: 'true' };
     const config = loadConfig({ env });
@@ -496,7 +496,7 @@ describe('createObjectEnvy', () => {
   });
 
   it('allows overriding default options', () => {
-    const loadConfig = createObjectEnvy({ prefix: 'APP', coerce: true });
+    const loadConfig = objectEnvy({ prefix: 'APP', coerce: true });
 
     const env = { APP_PORT: '3000' };
 
@@ -609,7 +609,7 @@ describe('array value support', () => {
     const env = {
       ALLOWED_HOSTS: 'localhost,example.com,api.example.com'
     };
-    const config = objectEnvy({ env });
+    const config = objectify({ env });
     expect(config).toEqual({
       allowedHosts: ['localhost', 'example.com', 'api.example.com']
     });
@@ -621,7 +621,7 @@ describe('array value support', () => {
       FEATURE_FLAGS: 'feature1,feature2,feature3',
       BOOLEAN_LIST: 'true,false,yes,no'
     };
-    const config = objectEnvy({ env });
+    const config = objectify({ env });
     expect(config).toEqual({
       portNumbers: [3000, 3001, 3002],
       featureFlags: ['feature1', 'feature2', 'feature3'],
@@ -633,7 +633,7 @@ describe('array value support', () => {
     const env = {
       MIXED_VALUES: '1,hello,true,3.14'
     };
-    const config = objectEnvy({ env });
+    const config = objectify({ env });
     expect(config).toEqual({
       mixedValues: [1, 'hello', true, 3.14]
     });
@@ -646,7 +646,7 @@ describe('array value support', () => {
       SERVER_HOSTS: 'host1,host2',
       SERVER_PORT: '3000'
     };
-    const config = objectEnvy({ env });
+    const config = objectify({ env });
     expect(config).toEqual({
       log: {
         levels: ['debug', 'info', 'warn'],
@@ -665,7 +665,7 @@ describe('array value support', () => {
       APP_PORT: '3000',
       OTHER_VAR: 'ignored'
     };
-    const config = objectEnvy({ env, prefix: 'APP' });
+    const config = objectify({ env, prefix: 'APP' });
     expect(config).toEqual({
       allowedOrigins: ['http://localhost', 'https://example.com'],
       port: 3000
@@ -683,7 +683,7 @@ describe('array value support', () => {
       PORTS: '3000,3001,3002'
     };
 
-    const config = objectEnvy({ env, schema });
+    const config = objectify({ env, schema });
     expect(config).toEqual({
       allowedHosts: ['localhost', 'example.com'],
       ports: [3000, 3001, 3002]
@@ -694,7 +694,7 @@ describe('array value support', () => {
     const env = {
       HOSTS: 'host1,host2,host3'
     };
-    const config = objectEnvy({ env, coerce: false });
+    const config = objectify({ env, coerce: false });
     // With coerce disabled, values remain as strings
     expect(config).toEqual({
       hosts: 'host1,host2,host3'
@@ -705,7 +705,7 @@ describe('array value support', () => {
     const env = {
       TAGS: ' tag1 , tag2 , tag3 '
     };
-    const config = objectEnvy({ env });
+    const config = objectify({ env });
     expect(config).toEqual({
       tags: ['tag1', 'tag2', 'tag3']
     });
@@ -715,7 +715,7 @@ describe('array value support', () => {
     const env = {
       VALUES: 'a,,b,,,c'
     };
-    const config = objectEnvy({ env });
+    const config = objectify({ env });
     expect(config).toEqual({
       values: ['a', 'b', 'c']
     });
@@ -726,7 +726,7 @@ describe('array value support', () => {
       HOST: 'localhost',
       PORT: '3000'
     };
-    const config = objectEnvy({ env });
+    const config = objectify({ env });
     expect(config).toEqual({
       host: 'localhost',
       port: 3000

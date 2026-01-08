@@ -3,10 +3,8 @@ import * as objectenvy from './index.js';
 
 describe('Module exports', () => {
   it('exports all main functions', () => {
+    expect(objectenvy.objectify).toBeDefined();
     expect(objectenvy.objectEnvy).toBeDefined();
-    expect(objectenvy.config).toBeDefined();
-    expect(objectenvy.createObjectEnvy).toBeDefined();
-    expect(objectenvy.createConfig).toBeDefined();
     expect(objectenvy.applyDefaults).toBeDefined();
     expect(objectenvy.merge).toBeDefined();
     expect(objectenvy.toCamelCase).toBeDefined();
@@ -14,10 +12,12 @@ describe('Module exports', () => {
     expect(objectenvy.coerceValue).toBeDefined();
   });
 
-  it('maintains backward compatibility with aliases', () => {
-    // New names map to config and createConfig
-    expect(objectenvy.objectEnvy).toBe(objectenvy.config);
-    expect(objectenvy.createObjectEnvy).toBe(objectenvy.createConfig);
+  it('exports objectify for creating config from env', () => {
+    expect(typeof objectenvy.objectify).toBe('function');
+  });
+
+  it('exports objectEnvy for creating config loader', () => {
+    expect(typeof objectenvy.objectEnvy).toBe('function');
   });
 });
 
