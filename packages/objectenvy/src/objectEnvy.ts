@@ -1,12 +1,14 @@
 import type { z } from 'zod';
-import type { ObjectEnvyOptions, ConfigObject, ConfigValue } from './types.js';
+import type { EnvSource, ObjectEnvyOptions, ConfigObject, ConfigValue } from './types.js';
 import { coerceValue, setNestedValue } from './utils.js';
+import type { ToEnv, FromEnv } from './typeUtils.js';
 
 interface ParsedEntry {
   key: string;
   segments: string[];
   value: string;
 }
+
 
 interface SchemaPath {
   path: string[];
@@ -83,8 +85,8 @@ function segmentsToFlatCamelCase(segments: string[], delimiter = '_'): string {
 }
 
 /**
- * Extract all leaf paths from a Zod schema or schema-like object
- * Supports both Zod v3 (typeName) and Zod v4 (type) structures
+ * Extract all leaf paths from a Zod schema or plain object schema
+ * Supports both Zod v3 (typeName) and Zod v4 (type) structures, as well as plain objects
  */
 function extractSchemaPaths(schema: unknown, currentPath: string[] = []): SchemaPath[] {
   const paths: SchemaPath[] = [];
@@ -362,54 +364,125 @@ function buildConfigWithSchema(
  * });
  * const config = objectify({ schema });
  * // Returns typed config with validation
+ *
+ * @example
+ * // With type-fest Schema (plain object) for type safety without validation
+ * const schema = {
+ *   portNumber: 0,
+ *   log: {
+ *     level: '',
+ *     path: ''
+ *   }
+ * } as const;
+ * const config = objectify({ schema });
+ * // Returns typed config without validation
  */
-export function objectify(options?: Omit<ObjectEnvyOptions, 'schema'>): ConfigObject;
+export function objectify(): ConfigObject;
+export function objectify(
+  options: Omit<ObjectEnvyOptions, 'schema' | 'env'> & { env?: undefined }
+): ConfigObject;
+export function objectify<E extends EnvSource>(
+  options: Omit<ObjectEnvyOptions, 'schema'> & { env: E }
+): FromEnv<E>;
 export function objectify<T extends ConfigObject>(
-  options: ObjectEnvyOptions<T> & { schema: z.ZodObject<any> }
+  options: ObjectEnvyOptions<T> & { schema: z.ZodObject<any> | T }
 ): T;
 export function objectify<T extends ConfigObject = ConfigObject>(
   options: ObjectEnvyOptions<T> = {}
 ): T | ConfigObject {
-  const env = options.env ?? process.env;
+  const env = (options.env ?? process.env) as Record<string, string | undefined>;
 
   if (options.schema) {
     // Use schema-guided building when schema is provided
     const config = buildConfigWithSchema(env, options.schema, options);
-    return (options.schema as z.ZodObject<any>).parse(config) as T;
+
+    // If it's a Zod schema, validate and parse
+    if ('_def' in options.schema) {
+      return (options.schema as z.ZodObject<any>).parse(config) as T;
+    }
+
+    // For plain object schemas (type-fest), just return the config
+    return config as T;
   }
 
   // Use smart nesting heuristic when no schema
   const config = buildConfig(env, options);
-  return config as T | ConfigObject;
+  return config as FromEnv<typeof env>;
 }
 
 /**
- * Create a configuration loader with preset options
+ * Create a configuration loader with preset options.
+ * Returns both objectify and envy functions with memoization.
  *
  * @example
- * const loadConfig = objectEnvy({
+ * const { objectify: loadConfig, envy: toEnv } = objectEnvy({
  *   prefix: 'APP',
  *   schema: appConfigSchema
  * });
  *
- * const config = loadConfig(); // Uses preset options
+ * const config = loadConfig(); // Uses preset options with caching
  * const testConfig = loadConfig({ env: testEnv }); // Override env for testing
+ * const env = toEnv(config); // Convert config back to env format
  */
 export function objectEnvy(
   defaultOptions: Omit<ObjectEnvyOptions, 'schema'>
-): (overrides?: Partial<Omit<ObjectEnvyOptions, 'schema'>>) => ConfigObject;
+): {
+  objectify: (overrides?: Partial<Omit<ObjectEnvyOptions, 'schema'>>) => ConfigObject;
+  envy: typeof envy;
+};
 export function objectEnvy<T extends ConfigObject>(
-  defaultOptions: ObjectEnvyOptions<T> & { schema: z.ZodObject<any> }
-): (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => T;
+  defaultOptions: ObjectEnvyOptions<T> & { schema: z.ZodObject<any> | T }
+): {
+  objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => T;
+  envy: typeof envy;
+};
 export function objectEnvy<T extends ConfigObject = ConfigObject>(
   defaultOptions: ObjectEnvyOptions<T>
-): (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => T | ConfigObject {
-  return (overrides = {}) => {
+): {
+  objectify: (overrides?: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>>) => T | ConfigObject;
+  envy: typeof envy;
+} {
+  // Create a memoization cache for this specific objectEnvy instance
+  const cache = new WeakMap<NodeJS.ProcessEnv, Map<string, ConfigObject>>();
+
+  const objectifyFn = (overrides: Partial<Omit<ObjectEnvyOptions<T>, 'schema'>> = {}) => {
     const mergedOptions = { ...defaultOptions, ...overrides };
-    if ('schema' in mergedOptions && mergedOptions.schema) {
-      return objectify(mergedOptions as ObjectEnvyOptions<T> & { schema: z.ZodObject<any> });
+    const env = mergedOptions.env ?? process.env;
+
+    // Create cache key from options
+    const optionsKey = JSON.stringify({
+      prefix: mergedOptions.prefix,
+      coerce: mergedOptions.coerce ?? true,
+      delimiter: mergedOptions.delimiter ?? '_',
+      schema: mergedOptions.schema ? JSON.stringify(mergedOptions.schema) : undefined
+    });
+
+    // Check cache
+    let envCache = cache.get(env);
+    if (!envCache) {
+      envCache = new Map<string, ConfigObject>();
+      cache.set(env, envCache);
     }
-    return objectify(mergedOptions as Omit<ObjectEnvyOptions, 'schema'>);
+
+    if (envCache.has(optionsKey)) {
+      return envCache.get(optionsKey)! as T | ConfigObject;
+    }
+
+    // Compute result using objectify
+    const result: ConfigObject = 'schema' in mergedOptions && mergedOptions.schema
+      ? objectify({ ...mergedOptions, schema: mergedOptions.schema } as ObjectEnvyOptions<ConfigObject> & { schema: z.ZodObject<any> | ConfigObject })
+      : mergedOptions.env
+        ? objectify({ ...mergedOptions, env: mergedOptions.env } as ObjectEnvyOptions<ConfigObject> & { env: EnvSource })
+        : objectify({ prefix: mergedOptions.prefix, coerce: mergedOptions.coerce, delimiter: mergedOptions.delimiter });
+
+    // Cache the result
+    envCache.set(optionsKey, result);
+    return result as T | ConfigObject;
+  };
+
+  return {
+    objectify: objectifyFn,
+    envy
   };
 }
 
@@ -421,29 +494,30 @@ export function objectEnvy<T extends ConfigObject = ConfigObject>(
  * const finalConfig = applyDefaults(config, defaults);
  * // finalConfig = { port: 3000, log: { level: 'debug', path: '/var/log' } }
  */
-export function applyDefaults<T extends ConfigObject>(
+export function apply<T extends ConfigObject>(
   config: Partial<T>,
-  defaults: Partial<T>
-): Partial<T> {
+  defaults: T
+): T {
+  const result: any = { ...config };
   for (const [key, value] of Object.entries(defaults)) {
-    if (config[key as keyof T] === undefined) {
-      config[key as keyof T] = value as T[keyof T];
+    if (result[key] === undefined) {
+      result[key] = value;
     } else if (
       value &&
       typeof value === 'object' &&
       !Array.isArray(value) &&
-      config[key as keyof T] &&
-      typeof config[key as keyof T] === 'object' &&
-      !Array.isArray(config[key as keyof T])
+      result[key] &&
+      typeof result[key] === 'object' &&
+      !Array.isArray(result[key])
     ) {
       // Recursively apply defaults for nested objects
-      config[key as keyof T] = applyDefaults(
-        config[key as keyof T] as Partial<ConfigObject>,
-        value as Partial<ConfigObject>
-      ) as T[keyof T];
+      result[key] = apply(
+        result[key] as Partial<ConfigObject>,
+        value as ConfigObject
+      );
     }
   }
-  return config;
+  return result as T;
 }
 
 /**
@@ -458,7 +532,7 @@ export function applyDefaults<T extends ConfigObject>(
  * const merged = merge(config1, config2);
  * // merged = { port: 3000, log: { level: 'info', path: '/var/log' }, debug: true }
  */
-export function merge<T extends ConfigObject, U extends Partial<T>>(obj1: T, obj2: U): T & U {
+export function merge<T extends ConfigObject, U extends ConfigObject>(obj1: T, obj2: U): T & U {
   const result: any = { ...obj1 };
   for (const [key, value] of Object.entries(obj2)) {
     if (
@@ -470,7 +544,7 @@ export function merge<T extends ConfigObject, U extends Partial<T>>(obj1: T, obj
       !Array.isArray(result[key])
     ) {
       // Recursively merge nested objects
-      result[key] = merge(result[key] as ConfigObject, value as Partial<ConfigObject>);
+      result[key] = merge(result[key] as ConfigObject, value as ConfigObject);
     } else {
       result[key] = value;
     }
@@ -499,7 +573,7 @@ export function merge<T extends ConfigObject, U extends Partial<T>>(obj1: T, obj
  * //   LOG_PATH: '/var/log'
  * // }
  */
-export function envy<T extends ConfigObject>(config: T): Record<string, string> {
+export function envy<T extends ConfigObject>(config: T): ToEnv<T> {
   const env: Record<string, string> = {};
 
   function flatten(obj: ConfigValue, prefix = ''): void {
@@ -540,7 +614,7 @@ export function envy<T extends ConfigObject>(config: T): Record<string, string> 
   }
 
   flatten(config);
-  return env;
+  return env as ToEnv<T>;
 }
 
 /**

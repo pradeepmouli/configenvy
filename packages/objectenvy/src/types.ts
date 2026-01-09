@@ -10,6 +10,14 @@ export type ConfigArray = Array<ConfigPrimitive | ConfigObject>;
 
 export type ConfigValue = ConfigPrimitive | ConfigObject | ConfigArray;
 
+// Schema can be either Zod or a plain object with the same structure as T
+export type SchemaType<T> = z.ZodObject<any> | T;
+
+export type EnvSource = Record<string, string | undefined>;
+
+// Depth-limited schema type to prevent excessive type instantiation
+type SchemaWithDepth<T, D extends number = 2> = D extends 0 ? any : z.ZodObject<any> | T;
+
 export interface ObjectEnvyOptions<T = ConfigObject> {
   /**
    * Filter environment variables by prefix.
@@ -20,12 +28,14 @@ export interface ObjectEnvyOptions<T = ConfigObject> {
   /**
    * Custom environment object. Defaults to process.env
    */
-  env?: NodeJS.ProcessEnv;
+  env?: EnvSource;
 
   /**
-   * Zod schema for validation and type inference
+   * Schema for validation and type inference.
+   * Can be either a Zod schema or a plain object with the same structure as your config.
+   * Zod schemas will validate, plain objects provide type inference only.
    */
-  schema?: T extends ConfigObject ? z.ZodObject<any> : never;
+  schema?: T extends ConfigObject ? SchemaWithDepth<T> : never;
 
   /**
    * Whether to automatically coerce values to numbers/booleans

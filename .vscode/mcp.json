@@ -8,6 +8,13 @@
         "CONTEXT7_API_KEY": "${env:CONTEXT7_API_KEY}"
       }
     },
+	"npm-search": {
+		"command": "npx",
+		"args": [
+			"-y",
+			"npm-search-mcp-server"
+		]
+	},
     "codemod": {
       "command": "npx",
       "args": ["codemod@latest", "mcp"]

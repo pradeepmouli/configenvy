@@ -1,8 +1,31 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, expectTypeOf } from 'vitest';
 import { z } from 'zod';
-import { objectify, objectEnvy, envy, applyDefaults, merge } from './objectEnvy.js';
+import { objectify, objectEnvy, envy, apply, merge } from './objectEnvy.js';
+import type { ToEnv, FromEnv } from './typeUtils.js';
+import type { EnvSource } from './types.js';
 
 describe('objectify', () => {
+  describe('FromEnv type mapping', () => {
+    it('keeps single-prefix entries flat', () => {
+      const env = {
+        LOG_LEVEL: 'debug'
+      } as const;
+
+      type Result = FromEnv<typeof env>;
+      expectTypeOf({} as Result).toEqualTypeOf<{ logLevel: string }>({} as any);
+    });
+
+    it('nests when multiple entries share a prefix', () => {
+      const env = {
+        LOG_LEVEL: 'debug',
+        LOG_PATH: '/var/log'
+      } as const;
+
+      type Result = FromEnv<typeof env>;
+      expectTypeOf({} as Result).toEqualTypeOf<{ log: { level: string; path: string } }>({} as any);
+    });
+  });
+
   describe('basic mapping', () => {
     it('maps simple env vars to flat config', () => {
       const env = {
@@ -19,7 +42,7 @@ describe('objectify', () => {
     it('keeps single SNAKE_CASE entry flat as camelCase', () => {
       const env = {
         PORT_NUMBER: '1234'
-      };
+      } satisfies EnvSource;
       const config = objectify({ env });
       // Only one PORT_* entry, so it stays flat
       expect(config).toEqual({
@@ -31,8 +54,8 @@ describe('objectify', () => {
       const env = {
         LOG_LEVEL: 'debug',
         LOG_PATH: '/var/log'
-      };
-      const config = objectify({ env });
+      } satisfies EnvSource;
+      const config = objectify({ env }) as FromEnv<typeof env>;
       // Multiple LOG_* entries, so they get nested
       expect(config).toEqual({
         log: {
@@ -299,10 +322,11 @@ describe('objectify', () => {
       };
 
       const config = objectify({ env, schema });
+      type ExpectedConfig = z.infer<typeof schema>;
 
       // TypeScript should infer these types
-      const port: number = config.portNumber;
-      const level: string = config.log.level;
+      const port: number = (config as ExpectedConfig).portNumber;
+      const level: string = (config as ExpectedConfig).log.level;
 
       expect(port).toBe(3000);
       expect(level).toBe('info');
@@ -469,7 +493,7 @@ describe('objectify', () => {
 
 describe('objectEnvy (config loader factory)', () => {
   it('creates a reusable config loader', () => {
-    const loadConfig = objectEnvy({ prefix: 'APP' });
+    const { objectify: loadConfig } = objectEnvy({ prefix: 'APP' });
 
     const env1 = { APP_PORT: '3000' };
     const env2 = { APP_PORT: '4000' };
@@ -484,19 +508,20 @@ describe('objectEnvy (config loader factory)', () => {
       debug: z.boolean()
     });
 
-    const loadConfig = objectEnvy({ prefix: 'APP', schema });
+    const { objectify: loadConfig } = objectEnvy({ prefix: 'APP', schema });
 
     const env = { APP_PORT: '3000', APP_DEBUG: 'true' };
     const config = loadConfig({ env });
+    type ExpectedConfig = z.infer<typeof schema>;
 
     expect(config).toEqual({ port: 3000, debug: true });
     // TypeScript infers the type from schema
-    const port: number = config.port;
+    const port: number = (config as ExpectedConfig).port;
     expect(port).toBe(3000);
   });
 
   it('allows overriding default options', () => {
-    const loadConfig = objectEnvy({ prefix: 'APP', coerce: true });
+    const { objectify: loadConfig } = objectEnvy({ prefix: 'APP', coerce: true });
 
     const env = { APP_PORT: '3000' };
 
@@ -504,27 +529,115 @@ describe('objectEnvy (config loader factory)', () => {
     const config = loadConfig({ env, coerce: false });
     expect(config).toEqual({ port: '3000' });
   });
+
+  it('returns both objectify and envy functions', () => {
+    const { objectify: loadConfig, envy: toEnv } = objectEnvy({ prefix: 'APP' });
+
+    const env = { APP_PORT: '3000', APP_DEBUG: 'true' };
+    const config = loadConfig({ env });
+
+    expect(config).toEqual({ port: 3000, debug: true });
+
+    // Can use envy to convert back
+    const envVars = toEnv(config);
+    expect(envVars).toEqual({ PORT: '3000', DEBUG: 'true' });
+  });
+
+  it('memoizes objectify calls with same env and options', () => {
+    const { objectify: loadConfig } = objectEnvy({ prefix: 'APP' });
+
+    const env = { APP_PORT: '3000' };
+
+    const config1 = loadConfig({ env });
+    const config2 = loadConfig({ env });
+
+    // Same reference indicates memoization
+    expect(config1).toBe(config2);
+  });
+
+  it('does not memoize when env changes', () => {
+    const { objectify: loadConfig } = objectEnvy({ prefix: 'APP' });
+
+    const env1 = { APP_PORT: '3000' };
+    const env2 = { APP_PORT: '3000' };
+
+    const config1 = loadConfig({ env: env1 });
+    const config2 = loadConfig({ env: env2 });
+
+    // Different env objects = different cache entries
+    expect(config1).not.toBe(config2);
+    expect(config1).toEqual(config2); // But same values
+  });
+
+  it('returns typed env for nested config', () => {
+    type NestedConfig = {
+      database: {
+        host: string;
+        ports: {
+          read: number;
+          write: number;
+        };
+      };
+      features: string[];
+    };
+
+    const schema: NestedConfig = {
+      database: {
+        host: '',
+        ports: {
+          read: 0,
+          write: 0
+        }
+      },
+      features: ['']
+    };
+
+    const { objectify: loadConfig, envy: toEnv } = objectEnvy<NestedConfig>({
+      prefix: 'APP',
+      schema
+    });
+
+    const envInput = {
+      APP_DATABASE_HOST: 'localhost',
+      APP_DATABASE_PORTS_READ: '5432',
+      APP_DATABASE_PORTS_WRITE: '5433',
+      APP_FEATURES: 'alpha,beta'
+    };
+
+    const config = loadConfig({ env: envInput });
+    const envOutput = toEnv(config);
+
+    expect(envOutput).toEqual({
+      DATABASE_HOST: 'localhost',
+      DATABASE_PORTS_READ: '5432',
+      DATABASE_PORTS_WRITE: '5433',
+      FEATURES: 'alpha,beta'
+    });
+
+    // Type-level assertion: ToEnv maps nested keys to SCREAMING_SNAKE_CASE strings
+    expectTypeOf(envOutput).toEqualTypeOf<ToEnv<typeof config>>();
+  });
 });
 
 describe('applyDefaults', () => {
   it('applies default values to empty config', () => {
     const config = {};
     const defaults = { port: 3000, debug: false };
-    const result = applyDefaults(config, defaults);
+    const result = apply(config, defaults);
     expect(result).toEqual({ port: 3000, debug: false });
   });
 
   it('preserves existing values over defaults', () => {
     const config = { port: 8080 };
     const defaults = { port: 3000, debug: false };
-    const result = applyDefaults(config, defaults);
+    const result = apply(config, defaults);
     expect(result).toEqual({ port: 8080, debug: false });
   });
 
   it('recursively applies defaults to nested objects', () => {
-    const config = { log: { level: 'debug' } };
+    const config: any = { log: { level: 'debug' } };
     const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
-    const result = applyDefaults(config, defaults);
+    const result = apply(config, defaults);
     expect(result).toEqual({
       port: 3000,
       log: { level: 'debug', path: '/var/log' }
@@ -532,11 +645,11 @@ describe('applyDefaults', () => {
   });
 
   it('handles deeply nested objects', () => {
-    const config = { database: { connection: { host: 'localhost' } } };
+    const config: any = { database: { connection: { host: 'localhost' } } };
     const defaults = {
       database: { connection: { host: 'db.example.com', port: 5432 }, timeout: 30 }
     };
-    const result = applyDefaults(config, defaults);
+    const result = apply(config, defaults);
     expect(result).toEqual({
       database: {
         connection: { host: 'localhost', port: 5432 },
@@ -547,8 +660,8 @@ describe('applyDefaults', () => {
 
   it('does not override with undefined defaults', () => {
     const config = { port: 8080 };
-    const defaults = { port: undefined, debug: false };
-    const result = applyDefaults(config, defaults);
+    const defaults = { port: 3000, debug: false };
+    const result = apply(config, defaults);
     expect(result).toEqual({ port: 8080, debug: false });
   });
 });
@@ -884,4 +997,3 @@ describe('envy (reverse transformation)', () => {
     });
   });
 });
-

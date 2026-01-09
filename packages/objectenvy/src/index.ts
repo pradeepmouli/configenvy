@@ -2,7 +2,7 @@ export {
   objectify,
   objectEnvy,
   envy,
-  applyDefaults,
+  apply as applyDefaults,
   merge
 } from './objectEnvy.js';
 export { toCamelCase, toSnakeCase, coerceValue } from './utils.js';
