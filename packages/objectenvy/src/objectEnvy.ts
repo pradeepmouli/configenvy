@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { EnvSource, ObjectEnvyOptions, ConfigObject, ConfigValue } from './types.js';
+import type { EnvSource, ObjectEnvyOptions, ConfigObject, ConfigValue, MergeOptions, ArrayMergeStrategy } from './types.js';
 import { coerceValue, setNestedValue } from './utils.js';
 import type { ToEnv, FromEnv } from './typeUtils.js';
 
@@ -487,21 +487,77 @@ export function objectEnvy<T extends ConfigObject = ConfigObject>(
 }
 
 /**
- * Recursively apply default values to a config object
+ * Recursively apply default values to a config object with smart array handling
+ * @param config The configuration object to apply defaults to
+ * @param defaults The default values to apply
+ * @param options Merge options including array merge strategy
+ * @returns The config with defaults applied
+ *
  * @example
  * const config = { log: { level: 'debug' } };
  * const defaults = { port: 3000, log: { level: 'info', path: '/var/log' } };
- * const finalConfig = applyDefaults(config, defaults);
+ * const finalConfig = apply(config, defaults);
  * // finalConfig = { port: 3000, log: { level: 'debug', path: '/var/log' } }
+ *
+ * @example
+ * // Concatenate arrays instead of replacing
+ * const config = { tags: ['prod'] };
+ * const defaults = { port: 3000, tags: ['v1'] };
+ * const finalConfig = apply(config, defaults, { arrayMergeStrategy: 'concat' });
+ * // finalConfig = { port: 3000, tags: ['prod', 'v1'] }
  */
 export function apply<T extends ConfigObject>(
   config: Partial<T>,
-  defaults: T
+  defaults: T,
+  options: MergeOptions = {}
 ): T {
+  const { arrayMergeStrategy = 'replace' } = options;
+
+  function mergeArrays(arr1: unknown[], arr2: unknown[]): unknown[] {
+    if (arrayMergeStrategy === 'replace') {
+      return arr1.length > 0 ? arr1 : arr2;
+    }
+
+    if (arrayMergeStrategy === 'concat') {
+      return [...arr1, ...arr2];
+    }
+
+    if (arrayMergeStrategy === 'concat-unique') {
+      const result: unknown[] = [...arr1];
+      const seen = new Set<unknown>();
+
+      for (const item of arr1) {
+        if (typeof item !== 'object' || item === null) {
+          seen.add(item);
+        }
+      }
+
+      for (const item of arr2) {
+        if (typeof item !== 'object' || item === null) {
+          if (!seen.has(item)) {
+            result.push(item);
+            seen.add(item);
+          }
+        } else {
+          if (!result.some((existing) => JSON.stringify(existing) === JSON.stringify(item))) {
+            result.push(item);
+          }
+        }
+      }
+
+      return result;
+    }
+
+    return arr1.length > 0 ? arr1 : arr2;
+  }
+
   const result: any = { ...config };
   for (const [key, value] of Object.entries(defaults)) {
     if (result[key] === undefined) {
       result[key] = value;
+    } else if (Array.isArray(value) && Array.isArray(result[key])) {
+      // Both are arrays - use merge strategy
+      result[key] = mergeArrays(result[key], value);
     } else if (
       value &&
       typeof value === 'object' &&
@@ -513,7 +569,8 @@ export function apply<T extends ConfigObject>(
       // Recursively apply defaults for nested objects
       result[key] = apply(
         result[key] as Partial<ConfigObject>,
-        value as ConfigObject
+        value as ConfigObject,
+        options
       );
     }
   }
@@ -521,21 +578,88 @@ export function apply<T extends ConfigObject>(
 }
 
 /**
- * Recursively merge two configuration objects
+ * Recursively merge two configuration objects with smart array handling
  * @param obj1 The first configuration object
  * @param obj2 The second configuration object to merge into the first
+ * @param options Merge options including array merge strategy
  * @returns The merged configuration object
  *
  * @example
+ * // Default behavior (replace arrays)
  * const config1 = { port: 3000, log: { level: 'info' } };
  * const config2 = { log: { path: '/var/log' }, debug: true };
  * const merged = merge(config1, config2);
  * // merged = { port: 3000, log: { level: 'info', path: '/var/log' }, debug: true }
+ *
+ * @example
+ * // Concatenate arrays
+ * const config1 = { tags: ['prod', 'v1'] };
+ * const config2 = { tags: ['api'] };
+ * const merged = merge(config1, config2, { arrayMergeStrategy: 'concat' });
+ * // merged = { tags: ['prod', 'v1', 'api'] }
+ *
+ * @example
+ * // Concatenate and deduplicate arrays
+ * const config1 = { hosts: ['localhost', 'example.com'] };
+ * const config2 = { hosts: ['example.com', 'api.example.com'] };
+ * const merged = merge(config1, config2, { arrayMergeStrategy: 'concat-unique' });
+ * // merged = { hosts: ['localhost', 'example.com', 'api.example.com'] }
  */
-export function merge<T extends ConfigObject, U extends ConfigObject>(obj1: T, obj2: U): T & U {
+export function merge<T extends ConfigObject, U extends ConfigObject>(
+  obj1: T,
+  obj2: U,
+  options: MergeOptions = {}
+): T & U {
+  const { arrayMergeStrategy = 'replace' } = options;
+
+  function mergeArrays(arr1: unknown[], arr2: unknown[]): unknown[] {
+    if (arrayMergeStrategy === 'replace') {
+      return arr2;
+    }
+
+    if (arrayMergeStrategy === 'concat') {
+      return [...arr1, ...arr2];
+    }
+
+    if (arrayMergeStrategy === 'concat-unique') {
+      // Deduplicate by converting to Set for primitives, or tracking objects
+      const result: unknown[] = [...arr1];
+      const seen = new Set<unknown>();
+
+      // Add primitives from arr1 to seen set
+      for (const item of arr1) {
+        if (typeof item !== 'object' || item === null) {
+          seen.add(item);
+        }
+      }
+
+      // Add items from arr2 that aren't already present
+      for (const item of arr2) {
+        if (typeof item !== 'object' || item === null) {
+          if (!seen.has(item)) {
+            result.push(item);
+            seen.add(item);
+          }
+        } else {
+          // For objects, use a simple reference check
+          if (!result.some((existing) => JSON.stringify(existing) === JSON.stringify(item))) {
+            result.push(item);
+          }
+        }
+      }
+
+      return result;
+    }
+
+    return arr2;
+  }
+
   const result: any = { ...obj1 };
   for (const [key, value] of Object.entries(obj2)) {
-    if (
+    if (Array.isArray(value) && Array.isArray(result[key])) {
+      // Both are arrays - use merge strategy
+      result[key] = mergeArrays(result[key], value);
+    } else if (
       value &&
       typeof value === 'object' &&
       !Array.isArray(value) &&
@@ -543,9 +667,10 @@ export function merge<T extends ConfigObject, U extends ConfigObject>(obj1: T, o
       typeof result[key] === 'object' &&
       !Array.isArray(result[key])
     ) {
-      // Recursively merge nested objects
-      result[key] = merge(result[key] as ConfigObject, value as ConfigObject);
+      // Both are objects - recursively merge
+      result[key] = merge(result[key] as ConfigObject, value as ConfigObject, options);
     } else {
+      // For all other cases (arrays with non-arrays, primitives, etc.), override
       result[key] = value;
     }
   }

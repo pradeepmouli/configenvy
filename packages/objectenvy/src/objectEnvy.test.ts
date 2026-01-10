@@ -664,6 +664,52 @@ describe('applyDefaults', () => {
     const result = apply(config, defaults);
     expect(result).toEqual({ port: 8080, debug: false });
   });
+
+  describe('smart array merging', () => {
+    it('replaces arrays by default', () => {
+      const config = { tags: ['prod'] };
+      const defaults = { port: 3000, tags: ['v1'] };
+      const result = apply(config, defaults);
+      expect(result).toEqual({ port: 3000, tags: ['prod'] });
+    });
+
+    it('concatenates arrays with concat strategy', () => {
+      const config = { tags: ['prod'] };
+      const defaults = { port: 3000, tags: ['v1'] };
+      const result = apply(config, defaults, { arrayMergeStrategy: 'concat' });
+      expect(result).toEqual({ port: 3000, tags: ['prod', 'v1'] });
+    });
+
+    it('concatenates and deduplicates with concat-unique strategy', () => {
+      const config = { hosts: ['localhost', 'example.com'] };
+      const defaults = { port: 3000, hosts: ['example.com', 'api.example.com'] };
+      const result = apply(config, defaults, { arrayMergeStrategy: 'concat-unique' });
+      expect(result).toEqual({
+        port: 3000,
+        hosts: ['localhost', 'example.com', 'api.example.com']
+      });
+    });
+
+    it('applies defaults to missing arrays', () => {
+      const config = { port: 8080 };
+      const defaults = { port: 3000, tags: ['v1', 'prod'] };
+      const result = apply(config, defaults, { arrayMergeStrategy: 'concat' });
+      expect(result).toEqual({ port: 8080, tags: ['v1', 'prod'] });
+    });
+
+    it('concatenates arrays in deeply nested structures', () => {
+      const config: any = { server: { tags: ['prod'] }, db: { hosts: ['db1'] } };
+      const defaults = {
+        server: { tags: ['v1'], port: 3000 },
+        db: { hosts: ['db2'], pool: 10 }
+      };
+      const result = apply(config, defaults, { arrayMergeStrategy: 'concat' });
+      expect(result).toEqual({
+        server: { tags: ['prod', 'v1'], port: 3000 },
+        db: { hosts: ['db1', 'db2'], pool: 10 }
+      });
+    });
+  });
 });
 
 describe('merge', () => {
@@ -714,6 +760,99 @@ describe('merge', () => {
     const obj2 = { tags: ['c', 'd'] };
     const result = merge(obj1, obj2);
     expect(result).toEqual({ tags: ['c', 'd'] });
+  });
+
+  describe('smart array merging', () => {
+    it('replaces arrays by default', () => {
+      const obj1 = { tags: ['a', 'b'], port: 3000 };
+      const obj2 = { tags: ['c', 'd'] };
+      const result = merge(obj1, obj2);
+      expect(result).toEqual({ tags: ['c', 'd'], port: 3000 });
+    });
+
+    it('concatenates arrays with concat strategy', () => {
+      const obj1 = { tags: ['a', 'b'], port: 3000 };
+      const obj2 = { tags: ['c', 'd'] };
+      const result = merge(obj1, obj2, { arrayMergeStrategy: 'concat' });
+      expect(result).toEqual({ tags: ['a', 'b', 'c', 'd'], port: 3000 });
+    });
+
+    it('concatenates and deduplicates primitives with concat-unique strategy', () => {
+      const obj1 = { hosts: ['localhost', 'example.com'], port: 3000 };
+      const obj2 = { hosts: ['example.com', 'api.example.com'] };
+      const result = merge(obj1, obj2, { arrayMergeStrategy: 'concat-unique' });
+      expect(result).toEqual({
+        hosts: ['localhost', 'example.com', 'api.example.com'],
+        port: 3000
+      });
+    });
+
+    it('concatenates arrays in deeply nested structures', () => {
+      const obj1 = {
+        server: { hosts: ['host1'], port: 3000 },
+        db: { hosts: ['db1'] }
+      };
+      const obj2 = {
+        server: { hosts: ['host2'] },
+        db: { hosts: ['db2'], pool: 10 }
+      };
+      const result = merge(obj1, obj2, { arrayMergeStrategy: 'concat' });
+      expect(result).toEqual({
+        server: { hosts: ['host1', 'host2'], port: 3000 },
+        db: { hosts: ['db1', 'db2'], pool: 10 }
+      });
+    });
+
+    it('handles mixed primitive types in concat-unique', () => {
+      const obj1 = { values: [1, 'a', true], port: 3000 };
+      const obj2 = { values: ['a', 2, false, 1] };
+      const result = merge(obj1, obj2, { arrayMergeStrategy: 'concat-unique' });
+      expect(result).toEqual({
+        values: [1, 'a', true, 2, false],
+        port: 3000
+      });
+    });
+
+    it('handles objects in arrays with concat-unique', () => {
+      const obj1 = { items: [{ id: 1 }, { id: 2 }] };
+      const obj2 = { items: [{ id: 2 }, { id: 3 }] };
+      const result = merge(obj1, obj2, { arrayMergeStrategy: 'concat-unique' });
+      // Note: Objects are deduplicated by JSON serialization
+      expect(result.items).toHaveLength(3);
+      expect(result.items).toContainEqual({ id: 1 });
+      expect(result.items).toContainEqual({ id: 2 });
+      expect(result.items).toContainEqual({ id: 3 });
+    });
+
+    it('handles empty arrays with concat strategy', () => {
+      const obj1 = { tags: [] };
+      const obj2 = { tags: ['a', 'b'] };
+      const result = merge(obj1, obj2, { arrayMergeStrategy: 'concat' });
+      expect(result).toEqual({ tags: ['a', 'b'] });
+    });
+
+    it('handles empty arrays with concat-unique strategy', () => {
+      const obj1 = { tags: ['a'] };
+      const obj2 = { tags: [] };
+      const result = merge(obj1, obj2, { arrayMergeStrategy: 'concat-unique' });
+      expect(result).toEqual({ tags: ['a'] });
+    });
+
+    it('preserves nested object merge when using array strategies', () => {
+      const obj1 = {
+        config: { port: 3000, tags: ['prod'] },
+        features: { enabled: true }
+      };
+      const obj2 = {
+        config: { timeout: 30, tags: ['v1'] },
+        features: { debug: true }
+      };
+      const result = merge(obj1, obj2, { arrayMergeStrategy: 'concat' });
+      expect(result).toEqual({
+        config: { port: 3000, timeout: 30, tags: ['prod', 'v1'] },
+        features: { enabled: true, debug: true }
+      });
+    });
   });
 });
 

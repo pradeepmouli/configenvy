@@ -10,6 +10,25 @@ export type ConfigArray = Array<ConfigPrimitive | ConfigObject>;
 
 export type ConfigValue = ConfigPrimitive | ConfigObject | ConfigArray;
 
+/**
+ * Strategy for merging arrays when combining configuration objects
+ * - 'replace': Replace the first array with the second (default)
+ * - 'concat': Concatenate arrays together
+ * - 'concat-unique': Concatenate and deduplicate based on primitive value equality
+ */
+export type ArrayMergeStrategy = 'replace' | 'concat' | 'concat-unique';
+
+/**
+ * Options for controlling merge behavior
+ */
+export interface MergeOptions {
+  /**
+   * Strategy for merging arrays
+   * @default 'replace'
+   */
+  arrayMergeStrategy?: ArrayMergeStrategy;
+}
+
 // Schema can be either Zod or a plain object with the same structure as T
 export type SchemaType<T> = z.ZodObject<any> | T;
 
