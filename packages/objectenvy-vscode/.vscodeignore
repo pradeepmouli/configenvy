@@ -1,12 +1,12 @@
-# Build artifacts
-src/**
-tests/**
+# Source files
+src
+tests
 *.ts
+!dist/**/*.d.ts
 *.map
-!dist/**/*.js
 
 # Dependencies
-node_modules/**
+node_modules
 
 # Config files
 tsconfig.json
@@ -34,7 +34,6 @@ vitest.config.ts
 *.tgz
 .DS_Store
 
-# Parent workspace files (don't package these)
-../../*
-../**
+# Parent directories (critical for monorepos)
+..
 

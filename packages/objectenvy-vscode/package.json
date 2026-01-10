@@ -22,12 +22,6 @@
     "workspaceContains:**/.env"
   ],
   "main": "./dist/extension.js",
-  "files": [
-    "dist/**/*.js",
-    "dist/**/*.d.ts",
-    "README.md",
-    "CHANGELOG.md"
-  ],
   "contributes": {
     "commands": [
       {
