@@ -36,4 +36,3 @@ vitest.config.ts
 
 # Parent directories (critical for monorepos)
 ..
-
