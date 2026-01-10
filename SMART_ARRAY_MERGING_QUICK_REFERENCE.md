@@ -3,7 +3,7 @@
 ## Three Merge Strategies
 
 ### 1. `'replace'` (Default)
-**What it does**: Second array replaces the first  
+**What it does**: Second array replaces the first
 **Use case**: When you want to completely override array values
 
 ```typescript
@@ -12,7 +12,7 @@ merge({ tags: ['a', 'b'] }, { tags: ['c'] })
 ```
 
 ### 2. `'concat'`
-**What it does**: Concatenate arrays, keep all elements including duplicates  
+**What it does**: Concatenate arrays, keep all elements including duplicates
 **Use case**: Building a complete list by combining configurations
 
 ```typescript
@@ -21,7 +21,7 @@ merge({ hosts: ['h1', 'h2'] }, { hosts: ['h3'] }, { arrayMergeStrategy: 'concat'
 ```
 
 ### 3. `'concat-unique'`
-**What it does**: Concatenate and remove duplicate values  
+**What it does**: Concatenate and remove duplicate values
 **Use case**: Merging configurations while avoiding duplicates
 
 ```typescript
@@ -112,9 +112,9 @@ Each type is deduplicated independently:
 
 ## Backward Compatibility
 
-✅ Default behavior unchanged  
-✅ No breaking changes  
-✅ Existing code works without modifications  
+✅ Default behavior unchanged
+✅ No breaking changes
+✅ Existing code works without modifications
 
 ```typescript
 // Old code still works exactly the same

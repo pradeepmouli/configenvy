@@ -1,6 +1,6 @@
 # Config Merging & Array Support Investigation
 
-**Date**: January 10, 2026  
+**Date**: January 10, 2026
 **Scope**: Investigating config merging capabilities for arrays and nested arrays
 
 ## Summary
@@ -31,7 +31,7 @@ ALLOWED_HOSTS="localhost,example.com,api.example.com"
 - ✅ Empty element filtering
 - ✅ Mixed type arrays: `"1,hello,true,3.14"` → `[1, 'hello', true, 3.14]`
 
-**Implementation Location**: 
+**Implementation Location**:
 - [src/utils.ts](src/utils.ts) - `coerceValue()` function (lines 58-91)
 - Uses simple comma-split logic for array detection
 
