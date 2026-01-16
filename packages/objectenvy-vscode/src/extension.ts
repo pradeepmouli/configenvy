@@ -181,6 +181,31 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
 
     const tsContent = convertObjectToTypeScript(configObj, interfaceName);
 
+    // Prompt for filename
+    const suggestedFilename = `${interfaceName.toLowerCase()}.types.ts`;
+    const filename = await vscode.window.showInputBox({
+      prompt: 'Enter filename for the generated types',
+      value: suggestedFilename,
+      placeHolder: suggestedFilename,
+      validateInput: (value) => {
+        if (!value) {
+          return 'Filename cannot be empty';
+        }
+        if (!/\.ts$/.test(value)) {
+          return 'Filename must end with .ts';
+        }
+        return null;
+      }
+    });
+
+    if (!filename) {
+      return; // User cancelled
+    }
+
+    // Ensure .types.ts extension if user didn't include it
+    const finalFilename = filename.endsWith('.types.ts') ? filename : 
+      filename.replace(/\.ts$/, '.types.ts');
+
     // Create new .ts file
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
@@ -188,7 +213,7 @@ async function handleGenerateTypes(outputChannel: vscode.OutputChannel): Promise
       return;
     }
 
-    const tsUri = vscode.Uri.joinPath(workspaceFolder.uri, `${interfaceName.toLowerCase()}.types.ts`);
+    const tsUri = vscode.Uri.joinPath(workspaceFolder.uri, finalFilename);
     const encoder = new TextEncoder();
     await vscode.workspace.fs.writeFile(tsUri, encoder.encode(tsContent));
 
