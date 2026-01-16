@@ -16,25 +16,44 @@ import {
 } from 'ts-morph';
 
 /**
+ * Type guard to check if a value is a ConfigValue.
+ * This recursively validates arrays and nested objects.
+ */
+function isConfigValue(value: unknown): value is ConfigValue {
+  const type = typeof value;
+
+  // Primitive enviable values
+  if (type === 'string' || type === 'number' || type === 'boolean') {
+    return true;
+  }
+
+  // Arrays must contain only ConfigValue elements
+  if (Array.isArray(value)) {
+    return value.every(element => isConfigValue(element));
+  }
+
+  // Plain objects (non-null, non-array) whose values are ConfigValue
+  if (type === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    return Object.values(obj).every(v => isConfigValue(v));
+  }
+
+  // All other types (undefined, function, symbol, bigint, etc.) are invalid
+  return false;
+}
+
+/**
  * Type guard to check if value is a ConfigObject (EnviableObject)
  * Validates that the value is a plain object (not array or null)
+ * and that all nested values conform to ConfigValue.
  */
 function isConfigObject(value: unknown): value is ConfigObject {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false;
   }
-  
-  // Check that all values in the object are valid ConfigValue types
-  // (string, number, boolean, object, or array)
+
   const obj = value as Record<string, unknown>;
-  return Object.values(obj).every(val => {
-    const type = typeof val;
-    return type === 'string' || 
-           type === 'number' || 
-           type === 'boolean' || 
-           Array.isArray(val) ||
-           (type === 'object' && val !== null);
-  });
+  return Object.values(obj).every(v => isConfigValue(v));
 }
 
 /**
