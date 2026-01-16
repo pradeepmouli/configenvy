@@ -15,9 +15,24 @@ import type {
 
 /**
  * Type guard to check if value is a ConfigObject (EnviableObject)
+ * Validates that the value is a plain object (not array or null)
  */
 function isConfigObject(value: unknown): value is ConfigObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  
+  // Check that all values in the object are valid ConfigValue types
+  // (string, number, boolean, object, or array)
+  const obj = value as Record<string, unknown>;
+  return Object.values(obj).every(val => {
+    const type = typeof val;
+    return type === 'string' || 
+           type === 'number' || 
+           type === 'boolean' || 
+           Array.isArray(val) ||
+           (type === 'object' && val !== null);
+  });
 }
 
 /**
@@ -468,11 +483,13 @@ function convertObjectToTypeScript(obj: ConfigObject, interfaceName = 'Config'):
     if (typeof value === 'boolean') return 'boolean';
     if (Array.isArray(value)) {
       if (value.length === 0) return 'unknown[]';
-      const firstType = getTypeString(value[0]!);
+      const firstElement = value[0];
+      if (firstElement === null || firstElement === undefined) return 'unknown[]';
+      const firstType = getTypeString(firstElement);
       return `${firstType}[]`;
     }
-    if (typeof value === 'object') {
-      return generateNestedInterface(value as ConfigObject);
+    if (typeof value === 'object' && isConfigObject(value)) {
+      return generateNestedInterface(value);
     }
     return 'unknown';
   }
