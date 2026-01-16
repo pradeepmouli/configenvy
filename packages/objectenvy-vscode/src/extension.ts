@@ -6,7 +6,6 @@
 import * as vscode from 'vscode';
 import { objectify, envy } from 'objectenvy';
 import type { ConfigValue, ConfigObject } from 'objectenvy';
-  Project,
   SyntaxKind,
   InterfaceDeclaration,
   TypeAliasDeclaration,
@@ -15,6 +14,7 @@ import type { ConfigValue, ConfigObject } from 'objectenvy';
 
 /**
  * Type guard to check if a value is a ConfigValue.
+
  * This recursively validates arrays and nested objects.
  */
 function isConfigValue(value: unknown): value is ConfigValue {
